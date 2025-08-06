@@ -30,7 +30,7 @@ export default function CoursesPage() {
   // Search button click: filter and reload
   const handleSearchClick = () => {
     filterByCategory(searchInput);
-    window.location.reload();
+    //window.location.reload();
   };
 
   return (
