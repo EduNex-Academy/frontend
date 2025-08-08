@@ -1,0 +1,191 @@
+import type { User, Course, Subscription, Progress, Certificate, Quiz, EmailNotification } from "@/types"
+
+export const mockUsers: User[] = [
+  {
+    id: "1",
+    username: "John Doe",
+    firstName: "John",
+    lastName: "Doe",
+    email: "john@example.com",
+    phoneNumber: "+1234567890",
+    profilePictureUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=john",
+    role: "student",
+    isActive: true,
+    createdAt: "2024-01-15",
+    lastLoginAt: "2024-01-25",
+    subscriptionStatus: "active",
+    subscriptionExpiresAt: "2024-12-31",
+  },
+  {
+    id: "2",
+    username: "Jane Smith",
+    firstName: "Jane",
+    lastName: "Smith",
+    email: "jane@example.com",
+    phoneNumber: "+1987654321",
+    profilePictureUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=jane",
+    role: "instructor",
+    isActive: true,
+    createdAt: "2024-01-10",
+    lastLoginAt: "2024-01-24",
+    subscriptionStatus: "inactive",
+    subscriptionExpiresAt: "2023-12-31",
+  },
+  {
+    id: "3",
+    username: "Mike Johnson",
+    firstName: "Mike",
+    lastName: "Johnson",
+    email: "mike@example.com",
+    phoneNumber: "+1122334455",
+    profilePictureUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=mike",
+    role: "student",
+    isActive: false,
+    createdAt: "2024-01-20",
+    lastLoginAt: "2024-01-25",
+    subscriptionStatus: "active",
+    subscriptionExpiresAt: "2024-07-15",
+  },
+]
+
+export const mockCourses: Course[] = [
+  {
+    id: "1",
+    title: "React Fundamentals",
+    description: "Learn the basics of React development",
+    instructor: mockUsers[1],
+    thumbnail: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=300&h=200&fit=crop",
+    duration: 480,
+    lessons: 24,
+    students: 156,
+    price: 99,
+    category: "Programming",
+    level: "beginner",
+    status: "published",
+    createdAt: "2024-01-10",
+    updatedAt: "2024-01-20",
+  },
+  {
+    id: "2",
+    title: "Advanced JavaScript",
+    description: "Master advanced JavaScript concepts",
+    instructor: mockUsers[1],
+    thumbnail: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=300&h=200&fit=crop",
+    duration: 720,
+    lessons: 36,
+    students: 89,
+    price: 149,
+    category: "Programming",
+    level: "advanced",
+    status: "published",
+    createdAt: "2024-01-05",
+    updatedAt: "2024-01-18",
+  },
+]
+
+export const mockSubscriptions: Subscription[] = [
+  {
+    id: "1",
+    userId: "1",
+    plan: "premium",
+    status: "active",
+    startDate: "2024-01-01",
+    endDate: "2024-12-31",
+    amount: 299,
+    paymentMethod: "Credit Card",
+  },
+  {
+    id: "2",
+    userId: "3",
+    plan: "basic",
+    status: "active",
+    startDate: "2024-01-15",
+    endDate: "2024-07-15",
+    amount: 99,
+    paymentMethod: "PayPal",
+  },
+]
+
+export const mockProgress: Progress[] = [
+  {
+    id: "1",
+    userId: "1",
+    courseId: "1",
+    completedLessons: 18,
+    totalLessons: 24,
+    percentage: 75,
+    lastAccessed: "2024-01-25",
+    timeSpent: 360,
+  },
+  {
+    id: "2",
+    userId: "3",
+    courseId: "1",
+    completedLessons: 12,
+    totalLessons: 24,
+    percentage: 50,
+    lastAccessed: "2024-01-24",
+    timeSpent: 240,
+  },
+]
+
+export const mockCertificates: Certificate[] = [
+  {
+    id: "1",
+    userId: "1",
+    courseId: "2",
+    issuedAt: "2024-01-20",
+    certificateUrl: "/certificates/cert-1.pdf",
+    status: "issued",
+  },
+]
+
+export const mockQuizzes: Quiz[] = [
+  {
+    id: "1",
+    courseId: "1",
+    title: "React Basics Quiz",
+    questions: 10,
+    passingScore: 70,
+    attempts: 3,
+    timeLimit: 30,
+    status: "active",
+  },
+  {
+    id: "2",
+    courseId: "2",
+    title: "JavaScript Advanced Quiz",
+    questions: 15,
+    passingScore: 80,
+    attempts: 2,
+    timeLimit: 45,
+    status: "active",
+  },
+]
+
+export const mockEmailNotifications: EmailNotification[] = [
+  {
+    id: "1",
+    type: "welcome",
+    recipient: "john@example.com",
+    subject: "Welcome to CourseHub!",
+    status: "sent",
+    sentAt: "2024-01-15T10:00:00Z",
+  },
+  {
+    id: "2",
+    type: "renewal",
+    recipient: "mike@example.com",
+    subject: "Subscription Renewal Reminder",
+    status: "pending",
+    scheduledAt: "2024-02-01T09:00:00Z",
+  },
+  {
+    id: "3",
+    type: "completion",
+    recipient: "john@example.com",
+    subject: "Congratulations! Course Completed",
+    status: "sent",
+    sentAt: "2024-01-20T15:30:00Z",
+  },
+]
