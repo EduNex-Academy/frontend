@@ -12,7 +12,7 @@ type Props = {
 };
 
 export default function DashboardHeader({
-  name = "John Doe",
+  name = "Adeepa Shashiprabhath",
   avatarSrc = TempImg,
   subtitle = "Welcome back — here's what's new",
 }: Props) {
