@@ -4,7 +4,7 @@ import Image, { StaticImageData } from "next/image";
 import TempImg from "../../images/ai.png"; // example profile pic
 import {students} from "../data/students";
 
-
+//change
 type Props = {
   name?: string;
   avatarSrc?: string | StaticImageData;
