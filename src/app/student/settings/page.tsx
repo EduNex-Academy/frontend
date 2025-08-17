@@ -10,6 +10,10 @@ export default function StudentSettings() {
   const [editProfile, setEditProfile] = useState(false);
   const [changePassword, setChangePassword] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string>(Adeepa.src);
+  const [name, setName] = useState("Adeepa Shashiprabhath");
+  const [email, setEmail] = useState("adeepashashiprabhath@gmail.com");
+  const [phone, setPhone] = useState("+94 762457340");
+  const [address, setAddress] = useState("123 Main St, City, Sri Lanka");
   const [coins, setCoins] = useState(0);
 
   return (
@@ -53,12 +57,12 @@ export default function StudentSettings() {
                     className="w-32 h-32 rounded-full object-cover border-4 border-blue-500"
                   />
                   <div className="space-y-2">
-                    <p className="text-2xl font-bold">Adeepa Shashiprabhath</p>
-                    <p className="text-gray-400">adeepashashiprabhath@gmail.com</p>
+                    <p className="text-2xl font-bold">{name}</p>
+                    <p className="text-gray-400">{email}</p>
                     <p className="text-gray-400">Student ID: 123456</p>
-                    <p className="text-gray-400">Phone: +94 762457340</p>
+                    <p className="text-gray-400">Phone: {phone}</p>
                     <p className="text-gray-400">Joined: Jan 2024</p>
-                    <p className="text-gray-400">Address: 123 Main St, City, Sri Lanka</p>
+                    <p className="text-gray-400">Address: {address}</p>
                   </div>
                 </div>
                 <div className="flex space-x-4 mt-4">
@@ -100,28 +104,35 @@ export default function StudentSettings() {
                     <input
                       type="text"
                       placeholder="Full Name"
-                      defaultValue="John Doe"
+                      value={name}
+                      onChange={e => setName(e.target.value)}
                       className="w-full p-3 rounded-lg bg-[#102a43] border border-gray-700 text-white"
                     />
                     <input
                       type="email"
                       placeholder="Email Address"
-                      defaultValue="johndoe@email.com"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
                       className="w-full p-3 rounded-lg bg-[#102a43] border border-gray-700 text-white"
                     />
                     <input
                       type="text"
                       placeholder="Phone Number"
-                      defaultValue="+1 234 567 8901"
+                      value={phone}
+                      onChange={e => setPhone(e.target.value)}
                       className="w-full p-3 rounded-lg bg-[#102a43] border border-gray-700 text-white"
                     />
                     <input
                       type="text"
                       placeholder="Address"
-                      defaultValue="123 Main St, City, Country"
+                      value={address}
+                      onChange={e => setAddress(e.target.value)}
                       className="w-full p-3 rounded-lg bg-[#102a43] border border-gray-700 text-white"
                     />
-                    <button className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg">
+                    <button
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg"
+                      onClick={() => setEditProfile(false)}
+                    >
                       Save Changes
                     </button>
                   </div>
