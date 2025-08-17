@@ -7,6 +7,8 @@ type EnrolledCourseCardProps = {
   image: StaticImageData | string;
   description?: string;
   progress?: number; // percentage
+  expectedCoins?: number;
+  remainingCoins?: number;
 };
 
 export default function EnrolledCourseCard({
@@ -15,6 +17,8 @@ export default function EnrolledCourseCard({
   image,
   description,
   progress,
+  expectedCoins,
+  remainingCoins,
 }: EnrolledCourseCardProps) {
   return (
     <div className="bg-[#0a1d3a] rounded-xl shadow-md overflow-hidden border border-blue-800 hover:shadow-lg transition">
@@ -32,6 +36,12 @@ export default function EnrolledCourseCard({
       <div className="p-4">
         <h3 className="text-lg font-semibold text-white">{title}</h3>
         <p className="text-sm text-blue-300 capitalize">{category}</p>
+        {typeof expectedCoins === "number" && (
+          <p className="text-xs text-green-400 mt-1">Expected Coins: {expectedCoins}</p>
+        )}
+        {typeof remainingCoins === "number" && (
+          <p className="text-xs text-yellow-400 mt-1">Remaining Coins Needed: {remainingCoins}</p>
+        )}
 
         {description && (
           <p className="mt-2 text-sm text-blue-200/80 line-clamp-2">

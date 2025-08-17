@@ -2,10 +2,10 @@
 "use client";
 
 import React from "react";
-import Sidebar from "../components/sidebar";
-import DashboradHeader from "../components/dashboard-header"; 
-import EnrolledCourseCard from "../components/enrolled-course-card";
-import { courses } from "../data/coursedata";
+import Sidebar from "../../components/sidebar";
+import DashboradHeader from "../../components/dashboard-header"; 
+import EnrolledCourseCard from "../../components/enrolled-course-card";
+import { courses } from "../../data/coursedata";
 export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b2540] to-[#09203a]">

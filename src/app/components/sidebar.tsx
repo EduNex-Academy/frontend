@@ -9,10 +9,11 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/courses", label: "Courses" },
-  { href: "/grades", label: "Grades" },
-  { href: "/settings", label: "Settings" },
+  { href: "/student/dashboard", label: "Dashboard" },
+  { href: "/student/courses", label: "Courses" },
+  { href: "/student/grades", label: "Grades" },
+  { href: "/student/subscription", label: "Subscription" },
+  { href: "/student/settings", label: "Settings" },
 ];
 
 export default function Sidebar() {

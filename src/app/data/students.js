@@ -11,6 +11,7 @@ export const students = [
     joinDate: "2024-01-12",
     status: "active",
     progress: 42, // percent
+    coins: 150,
   },
   {
     name: "Bimal Perera",
@@ -21,6 +22,7 @@ export const students = [
     joinDate: "2023-11-05",
     status: "active",
     progress: 58,
+    coins: 90,
   },
   {
     name: "Chathurika Jayasuriya",
@@ -31,6 +33,7 @@ export const students = [
     joinDate: "2024-03-01",
     status: "active",
     progress: 0,
+    coins: 30,
   },
   {
     name: "Dinesh Kumar",
@@ -41,6 +44,7 @@ export const students = [
     joinDate: "2023-09-18",
     status: "active",
     progress: 71,
+    coins: 200,
   },
   {
     name: "Eesha Silva",
@@ -51,6 +55,7 @@ export const students = [
     joinDate: "2024-02-07",
     status: "active",
     progress: 33,
+    coins: 60,
   },
   {
     name: "Farhan Ali",
@@ -61,6 +66,7 @@ export const students = [
     joinDate: "2024-04-02",
     status: "active",
     progress: 12,
+    coins: 40,
   },
   {
     name: "Gayathri Nandasena",
@@ -71,6 +77,7 @@ export const students = [
     joinDate: "2022-10-11",
     status: "active",
     progress: 86,
+    coins: 180,
   },
   {
     name: "Hirantha Silva",
@@ -81,6 +88,7 @@ export const students = [
     joinDate: "2023-06-20",
     status: "active",
     progress: 47,
+    coins: 120,
   },
   {
     name: "Ishara Peries",
@@ -91,6 +99,7 @@ export const students = [
     joinDate: "2023-12-01",
     status: "active",
     progress: 64,
+    coins: 100,
   },
   {
     name: "Janaka Rodrigo",
@@ -101,6 +110,7 @@ export const students = [
     joinDate: "2023-08-14",
     status: "inactive",
     progress: 20,
+    coins: 10,
   },
   {
     name: "Keerthi Mendis",
@@ -111,6 +121,7 @@ export const students = [
     joinDate: "2024-05-03",
     status: "active",
     progress: 0,
+    coins: 25,
   },
   {
     name: "Lakmini Rajapaksha",
@@ -121,5 +132,6 @@ export const students = [
     joinDate: "2022-07-22",
     status: "active",
     progress: 75,
+    coins: 140,
   },
 ];

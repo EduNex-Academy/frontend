@@ -9,12 +9,14 @@ type Props = {
   name?: string;
   avatarSrc?: string | StaticImageData;
   subtitle?: string;
+  coins?: number;
 };
 
 export default function DashboardHeader({
   name = "Adeepa Shashiprabhath",
   avatarSrc = TempImg,
   subtitle = "Welcome back — here's what's new",
+  coins = 0,
 }: Props) {
   return (
     <div className="w-full bg-[#0a1d3a] rounded-xl shadow-md">
@@ -36,6 +38,7 @@ export default function DashboardHeader({
           <div className="text-right hidden sm:block">
             <div className="text-sm text-blue-100 font-medium">{name}</div>
             <div className="text-xs text-blue-300">Student</div>
+            <div className="text-xs text-green-400 mt-1">Coins: {coins}</div>
           </div>
           <div className="w-14 h-14 rounded-full overflow-hidden bg-blue-700 ring-2 ring-blue-500/50 shadow-md">
             <Image

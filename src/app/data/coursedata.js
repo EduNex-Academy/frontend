@@ -26,6 +26,7 @@ export const courses = [
     description: "Master front-end and back-end development using React, Node.js, and MongoDB.",
     image: FullStack,
     category: "programming",
+    expectedCoins: 120,
   },
   {
     id: 2,
@@ -33,6 +34,7 @@ export const courses = [
     description: "Learn Python from scratch and build your first applications with ease.",
     image: Python,
     category: "programming",
+    expectedCoins: 80,
   },
   {
     id: 3,
@@ -40,6 +42,7 @@ export const courses = [
     description: "Gain a deep understanding of Java fundamentals and advanced topics.",
     image: Java,
     category: "programming",
+    expectedCoins: 100,
   },
 
   // === Data Science ===
@@ -49,6 +52,7 @@ export const courses = [
     description: "Learn to analyze data, build machine learning models, and harness AI tools.",
     image: DataScience,
     category: "data science",
+    expectedCoins: 110,
   },
   {
     id: 5,
@@ -56,6 +60,7 @@ export const courses = [
     description: "Build predictive models and master machine learning algorithms.",
     image: Machine,
     category: "data science",
+    expectedCoins: 90,
   },
   {
     id: 6,
@@ -63,6 +68,7 @@ export const courses = [
     description: "Create interactive dashboards and visualizations for data storytelling.",
     image: Tableau,
     category: "data science",
+    expectedCoins: 70,
   },
 
   // === Design ===
@@ -72,6 +78,7 @@ export const courses = [
     description: "Learn to design user-friendly and visually appealing digital products.",
     image: UIUX,
     category: "design",
+    expectedCoins: 60,
   },
   {
     id: 8,
@@ -79,6 +86,7 @@ export const courses = [
     description: "Master the basics of Photoshop for digital design and image editing.",
     image: Photoshop ,
     category: "design",
+    expectedCoins: 50,
   },
   {
     id: 9,
@@ -86,6 +94,7 @@ export const courses = [
     description: "From typography to color theory, learn everything about graphic design.",
     image: Graphic,
     category: "design",
+    expectedCoins: 75,
   },
 
   // === Marketing ===
@@ -95,6 +104,7 @@ export const courses = [
     description: "Learn SEO, social media marketing, and content creation to grow brands.",
     image: Marketing,
     category: "marketing",
+    expectedCoins: 65,
   },
   {
     id: 11,
@@ -102,6 +112,7 @@ export const courses = [
     description: "Create and manage ad campaigns on Facebook, Instagram, and LinkedIn.",
     image: Social,
     category: "marketing",
+    expectedCoins: 55,
   },
   {
     id: 12,
@@ -109,6 +120,7 @@ export const courses = [
     description: "Learn to create engaging email campaigns that convert.",
     image: Email,
     category: "marketing",
+    expectedCoins: 45,
   },
 
   // === Photography ===
@@ -118,6 +130,7 @@ export const courses = [
     description: "Understand camera settings, lighting, and composition for stunning photos.",
     image: Photography,
     category: "photography",
+    expectedCoins: 60,
   },
   {
     id: 14,
@@ -125,6 +138,7 @@ export const courses = [
     description: "Master portrait photography techniques for professional results.",
     image: Potrait,
     category: "photography",
+    expectedCoins: 50,
   },
   {
     id: 15,
@@ -132,6 +146,7 @@ export const courses = [
     description: "Capture breathtaking landscapes with expert tips and tricks.",
     image: Landscape,
     category: "photography",
+    expectedCoins: 55,
   },
 
   // === Music Production ===
@@ -141,6 +156,7 @@ export const courses = [
     description: "Create beats and produce professional tracks using FL Studio.",
     image: Music,
     category: "music production",
+    expectedCoins: 70,
   },
   {
     id: 17,
@@ -148,6 +164,7 @@ export const courses = [
     description: "Learn to mix and master tracks for a polished, radio-ready sound.",
     image: Audio,
     category: "music production",
+    expectedCoins: 60,
   },
   {
     id: 18,
@@ -155,6 +172,7 @@ export const courses = [
     description: "Produce EDM, house, and other electronic music genres.",
     image: Electronic,
     category: "music production",
+    expectedCoins: 65,
   },
 ];
 

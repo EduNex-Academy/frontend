@@ -99,6 +99,9 @@ export default function CoursesPage() {
               <div className="p-6">
                 <h2 className="text-2xl font-semibold mb-2">{course.title}</h2>
                 <p className="text-blue-800 mb-4">{course.description}</p>
+                {typeof course.expectedCoins === "number" && (
+                  <p className="text-xl font-bold text-green-700 mb-3">Expected Coins: {course.expectedCoins}</p>
+                )}
                 <Link
                   href={`/courses/${course.id}`}
                   className="inline-block bg-blue-900 text-white px-4 py-2 rounded-xl hover:bg-blue-800 transition"
