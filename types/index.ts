@@ -1,3 +1,6 @@
+// Re-export course types
+export * from './course'
+
 export interface User {
   id: string
   username: string
@@ -7,7 +10,11 @@ export interface User {
   phoneNumber: string
   profilePictureUrl?: string
   role: string
+  bio?: string
+  location?: string
+  dateOfBirth?: string
   isActive: boolean
+  emailVerified: boolean
   subscriptionStatus: string
   subscriptionExpiresAt: string
   createdAt: string
@@ -44,22 +51,17 @@ export interface AuthResponse {
   user: User
 }
 
-export interface Course {
-  id: string
-  title: string
-  description: string
-  instructor: User
-  thumbnail: string
-  duration: number // in minutes
-  lessons: number
-  students: number
-  price: number
-  category: string
-  level: "beginner" | "intermediate" | "advanced"
-  status: "draft" | "published" | "archived"
-  createdAt: string
-  updatedAt: string
+export interface ProfileUpdateRequest {
+  firstName?: string
+  lastName?: string
+  phoneNumber?: string
+  bio?: string
+  location?: string
+  dateOfBirth?: string
 }
+
+// Re-export course types
+export * from './course'
 
 export interface Subscription {
   id: string

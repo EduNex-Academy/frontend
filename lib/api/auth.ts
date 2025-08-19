@@ -2,7 +2,7 @@ import { apiClient } from './config'
 import { TokenManager } from '../auth/tokens'
 import { authConfig } from '../auth/config'
 import { OAuthUtils } from '../auth/oauth'
-import type { RegisterRequest, AuthResponse, AuthCallbackRequest, LoginUrls } from '@/types'
+import type { RegisterRequest, AuthResponse, AuthCallbackRequest, LoginUrls, ProfileUpdateRequest, User } from '@/types'
 
 export const authApi = {
     /**
@@ -112,17 +112,28 @@ export const authApi = {
         } catch (error: any) {
             // Log error but don't throw - we still want to clear local state
             console.error('Logout API error:', error)
+        } finally {
+            // Clear any additional cookies that might be set
+            if (typeof document !== 'undefined') {
+                // Clear all cookies by setting them to expire
+                document.cookie.split(";").forEach(cookie => {
+                    const eqPos = cookie.indexOf("=")
+                    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim()
+                    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`
+                    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+                })
+            }
         }
     },
 
     /**
-     * Verify email
+     * Send email verification
      */
-    verifyEmail: async (token: string): Promise<void> => {
+    sendEmailVerification: async (): Promise<void> => {
         try {
-            await apiClient.post('/auth/verify-email', { token })
+            await apiClient.post(authConfig.endpoints.sendEmailVerification)
         } catch (error: any) {
-            const message = error.response?.data?.message || 'Email verification failed'
+            const message = error.response?.data?.message || 'Failed to send verification email'
             throw new Error(message)
         }
     },
@@ -187,4 +198,29 @@ export const authApi = {
             throw new Error(message)
         }
     },
+
+    /** 
+     * Update user profile
+    */
+   updateProfile: async (profileData: ProfileUpdateRequest): Promise<void> => {
+       try {
+           await apiClient.post(authConfig.endpoints.updateProfile, profileData)
+       } catch (error: any) {
+           const message = error.response?.data?.message || 'Profile update failed'
+           throw new Error(message)
+       }
+   },
+
+   /**
+    * Get User Profile
+    */
+   getUserProfile: async (): Promise<User> => {
+       try {
+           const response = await apiClient.get(authConfig.endpoints.getUserProfile)
+           return response.data
+       } catch (error: any) {
+           const message = error.response?.data?.message || 'Failed to fetch user profile'
+           throw new Error(message)
+       }
+   }
 }

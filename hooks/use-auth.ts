@@ -22,6 +22,7 @@ interface AuthState {
     expiresIn: number
     user: User
   }) => void
+  updateUser: (user: User) => void
   logout: () => void
   setInitialized: (state: boolean) => void
 }
@@ -49,12 +50,22 @@ export const useAuth = create<AuthState>()((set) => ({
       expiresIn, 
       isAuthenticated: true 
     }),
-  logout: () => set({ 
-    user: null, 
-    accessToken: null, 
-    tokenType: null, 
-    expiresIn: null, 
-    isAuthenticated: false 
-  }),
+  updateUser: (user) => set({ user }),
+  logout: async () => {
+    // Clear client-side state
+    set({ 
+      user: null, 
+      accessToken: null, 
+      tokenType: null, 
+      expiresIn: null, 
+      isAuthenticated: false 
+    })
+    
+    // Clear any localStorage/sessionStorage if used
+    if (typeof window !== 'undefined') {
+      localStorage.clear()
+      sessionStorage.clear()
+    }
+  },
   setInitialized: (state) => set({ isInitialized: state }),
 }))

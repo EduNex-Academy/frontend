@@ -21,5 +21,8 @@ export const authConfig = {
     sendPasswordReset: '/auth/send-password-reset',
     verifyPasswordReset: '/auth/verify-password-reset',
     changePassword: '/auth/change-password',
+    sendEmailVerification: '/auth/send-email-verification',
+    updateProfile: '/auth/update-profile',
+    getUserProfile: '/auth/get-profile'
   }
 } as const

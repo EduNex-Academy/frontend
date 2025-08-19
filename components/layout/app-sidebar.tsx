@@ -2,120 +2,101 @@
 
 import {
   BookOpen,
-  BadgeIcon as Certificate,
-  CreditCard,
   Home,
-  Mail,
-  PieChart,
-  Settings,
-  Users,
   GraduationCap,
+  FileText,
+  User,
+  Clock,
+  CreditCard,
   BarChart3,
+  Users,
+  Plus,
+  Settings,
+  LogOut,
 } from "lucide-react"
-
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar"
+import { useAuth } from "@/hooks/use-auth"
+import { authApi } from "@/lib/api/auth"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-const items = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: Home,
-  },
-  {
-    title: "Courses",
-    url: "/dashboard/courses",
-    icon: BookOpen,
-  },
-  {
-    title: "Users",
-    url: "/dashboard/users",
-    icon: Users,
-  },
-  {
-    title: "Progress Tracking",
-    url: "/dashboard/progress",
-    icon: BarChart3,
-  },
-  {
-    title: "Subscriptions",
-    url: "/dashboard/subscriptions",
-    icon: CreditCard,
-  },
-  {
-    title: "Certificates",
-    url: "/dashboard/certificates",
-    icon: Certificate,
-  },
-  {
-    title: "Quizzes",
-    url: "/dashboard/quizzes",
-    icon: GraduationCap,
-  },
-  {
-    title: "Email Notifications",
-    url: "/dashboard/notifications",
-    icon: Mail,
-  },
-  {
-    title: "Analytics",
-    url: "/dashboard/analytics",
-    icon: PieChart,
-  },
-  {
-    title: "Settings",
-    url: "/dashboard/settings",
-    icon: Settings,
-  },
+const studentNavigation = [
+  { name: "Dashboard", href: "/student/dashboard", icon: Home },
+  { name: "Browse Courses", href: "/student/courses", icon: BookOpen },
+  { name: "My Courses", href: "/student/my-courses", icon: GraduationCap },
+  { name: "Assignments", href: "/student/assignments", icon: FileText },
+  { name: "Progress", href: "/student/progress", icon: BarChart3 },
+  { name: "Subscription", href: "/student/subscription", icon: CreditCard },
+  { name: "Profile", href: "/student/profile", icon: User },
+]
+
+const instructorNavigation = [
+  { name: "Dashboard", href: "/instructor/dashboard", icon: Home },
+  { name: "All Courses", href: "/instructor/courses", icon: BookOpen },
+  { name: "Create Course", href: "/instructor/courses/create", icon: Plus },
+  { name: "Students", href: "/instructor/students", icon: Users },
+  { name: "Assignments", href: "/instructor/assignments", icon: FileText },
+  { name: "Quizzes", href: "/instructor/quizzes", icon: GraduationCap },
+  { name: "Analytics", href: "/instructor/analytics", icon: BarChart3 },
+  { name: "Settings", href: "/instructor/settings", icon: Settings },
+  { name: "Profile", href: "/instructor/profile", icon: User },
 ]
 
 export function AppSidebar() {
+  const { user, logout } = useAuth()
   const pathname = usePathname()
 
+  const navigation = user?.role === "STUDENT" ? studentNavigation : instructorNavigation
+
+  const handleSignOut = async () => {
+    try {
+      // Call API logout to clear server-side cookies
+      await authApi.logout()
+
+      // Clear client-side auth state
+      logout()
+
+      // Redirect to login page
+      window.location.href = "/auth/login"
+    } catch (error) {
+      console.error("Sign out error:", error)
+      // Even if API call fails, still clear local state and redirect
+      logout()
+      window.location.href = "/auth/login"
+    }
+  }
+
   return (
-    <Sidebar variant="inset">
-      <SidebarHeader>
-        <div className="flex items-center gap-2 px-4 py-2">
-          <BookOpen className="h-6 w-6" />
-          <span className="font-semibold text-lg">CourseHub Admin</span>
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Platform Management</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-      <SidebarFooter>
-        <div className="px-4 py-2 text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} EduNex. All rights reserved.
-        </div>
-      </SidebarFooter>
-    </Sidebar>
+    <div className="fixed left-0 top-0 flex h-screen w-12 flex-col border-r bg-background z-40">
+      <div className="flex flex-1 flex-col items-center justify-center space-y-1 py-4">
+        {navigation.map((item) => {
+          const isActive = pathname === item.href
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 hover:bg-accent hover:text-blue-500 hover:scale-125 ${isActive
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground'
+                }`}
+              title={item.name}
+            >
+              <item.icon className="h-4 w-4" />
+            </Link>
+          )
+        })}
+      </div>
+
+      {/* Logout button at the bottom */}
+      <div className="flex items-center justify-center">
+        <button
+          onClick={handleSignOut}
+          className="flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-red-100 text-red-600 hover:text-red-700"
+          title="Sign Out"
+        >
+          <LogOut className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
   )
 }
+

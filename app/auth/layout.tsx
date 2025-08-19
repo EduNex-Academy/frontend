@@ -1,5 +1,6 @@
 import { Header } from "@/components/layout/Header"
 import { UserTypeProvider } from "@/components/layout/UserTypeContext"
+import { Footer } from "@/components/layout/Footer"
 
 export default function AuthLayout({
     children,
@@ -10,6 +11,7 @@ export default function AuthLayout({
         <UserTypeProvider>
             <Header showNavigation={false} />
             {children}
+            <Footer />
         </UserTypeProvider>
     )
 }
