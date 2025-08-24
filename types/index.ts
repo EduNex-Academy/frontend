@@ -1,6 +1,9 @@
 // Re-export course types
 export * from './course'
 
+// Re-export subscription types  
+export * from '../lib/api/subscription'
+
 export interface User {
   id: string
   username: string
