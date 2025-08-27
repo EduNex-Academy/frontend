@@ -140,7 +140,7 @@ export function CoursesPageLayout({ userRole, initialQuery = '' }: CoursesPageLa
                             </p>
                         </div>
                         {isInstructor && (
-                            <Link href="/instructor/courses/create">
+                            <Link href="/instructor/create_course">
                                 <Button className="bg-blue-600 hover:bg-blue-700">
                                     <Plus className="w-4 h-4 mr-2" />
                                     Create Course

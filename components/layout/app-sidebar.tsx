@@ -32,7 +32,7 @@ const studentNavigation = [
 const instructorNavigation = [
   { name: "Dashboard", href: "/instructor/dashboard", icon: Home },
   { name: "All Courses", href: "/instructor/courses", icon: BookOpen },
-  { name: "Create Course", href: "/instructor/courses/create", icon: Plus },
+  { name: "Create Course", href: "/instructor/create_course", icon: Plus },
   { name: "Students", href: "/instructor/students", icon: Users },
   { name: "Assignments", href: "/instructor/assignments", icon: FileText },
   { name: "Quizzes", href: "/instructor/quizzes", icon: GraduationCap },
