@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
-import { subscriptionApi, type SubscriptionPlan, type UserSubscription, type CreateSubscriptionRequest, type CreateSubscriptionResponse } from '@/lib/api/subscription'
+import { 
+  subscriptionApi, 
+  type SubscriptionPlan, 
+  type UserSubscription, 
+  type CreateSubscriptionRequest, 
+  type CreateSubscriptionResponse,
+  type SubscriptionSetupRequest,
+  type SubscriptionSetupResponse
+} from '@/lib/api/subscription'
 import { useToast } from './use-toast'
 
 interface UseSubscriptionReturn {
@@ -14,6 +22,8 @@ interface UseSubscriptionReturn {
   isLoadingSubscriptions: boolean
   isCancellingSubscription: boolean
   isCreatingSubscription: boolean
+  isSettingUpSubscription: boolean
+  isCompletingSubscription: boolean
   
   // Error states
   plansError: string | null
@@ -25,6 +35,8 @@ interface UseSubscriptionReturn {
   cancelSubscription: (subscriptionId: string) => Promise<void>
   activateSubscription: (subscriptionId: string) => Promise<void>
   createSubscription: (subscriptionData: CreateSubscriptionRequest) => Promise<CreateSubscriptionResponse>
+  setupSubscription: (setupData: SubscriptionSetupRequest) => Promise<SubscriptionSetupResponse>
+  completeSubscription: (customerId: string, planId: string) => Promise<UserSubscription>
   getPlansByBillingCycle: (planName: string, billingCycle: 'MONTHLY' | 'YEARLY') => SubscriptionPlan[]
   getGroupedPlans: () => Record<string, SubscriptionPlan[]>
 }
@@ -43,6 +55,8 @@ export const useSubscription = (): UseSubscriptionReturn => {
   const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(false)
   const [isCancellingSubscription, setIsCancellingSubscription] = useState(false)
   const [isCreatingSubscription, setIsCreatingSubscription] = useState(false)
+  const [isSettingUpSubscription, setIsSettingUpSubscription] = useState(false)
+  const [isCompletingSubscription, setIsCompletingSubscription] = useState(false)
   
   // Error states
   const [plansError, setPlansError] = useState<string | null>(null)
@@ -172,6 +186,52 @@ export const useSubscription = (): UseSubscriptionReturn => {
     }
   }, [toast])
 
+  // Setup subscription (new two-step flow)
+  const setupSubscription = useCallback(async (setupData: SubscriptionSetupRequest): Promise<SubscriptionSetupResponse> => {
+    try {
+      setIsSettingUpSubscription(true)
+      const response = await subscriptionApi.setupSubscription(setupData)
+      
+      return response
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to setup subscription'
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      })
+      throw error
+    } finally {
+      setIsSettingUpSubscription(false)
+    }
+  }, [toast])
+
+  // Complete subscription (new two-step flow)
+  const completeSubscription = useCallback(async (customerId: string, planId: string): Promise<UserSubscription> => {
+    try {
+      setIsCompletingSubscription(true)
+      const response = await subscriptionApi.completeSubscription(customerId, planId)
+      
+      // Refresh user subscriptions to get the latest data
+      await fetchUserSubscriptions()
+      
+      // Don't show a generic success toast here - let the calling component handle the specific message
+      // based on the subscription status
+      
+      return response
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to complete subscription'
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      })
+      throw error
+    } finally {
+      setIsCompletingSubscription(false)
+    }
+  }, [toast, fetchUserSubscriptions])
+
   // Helper function to get plans by billing cycle
   const getPlansByBillingCycle = useCallback((planName: string, billingCycle: 'MONTHLY' | 'YEARLY') => {
     return plans.filter(plan => 
@@ -240,6 +300,8 @@ export const useSubscription = (): UseSubscriptionReturn => {
     isLoadingSubscriptions,
     isCancellingSubscription,
     isCreatingSubscription,
+    isSettingUpSubscription,
+    isCompletingSubscription,
     
     // Error states
     plansError,
@@ -251,6 +313,8 @@ export const useSubscription = (): UseSubscriptionReturn => {
     cancelSubscription,
     activateSubscription,
     createSubscription,
+    setupSubscription,
+    completeSubscription,
     getPlansByBillingCycle,
     getGroupedPlans,
   }

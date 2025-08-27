@@ -76,6 +76,38 @@ export interface CreateSubscriptionResponse {
   subscriptionId?: string
 }
 
+export interface SubscriptionSetupRequest {
+  planId: string
+  billingCycle: 'MONTHLY' | 'YEARLY'
+  email: string
+}
+
+export interface SubscriptionSetupResponse {
+  setup_intent_client_secret: string
+  customer_id: string
+  plan_price: number
+  plan_id: string
+  plan_name: string
+  status: string
+  // Legacy fields for backwards compatibility
+  clientSecret?: string
+  customerId?: string
+  setupIntentId?: string
+}
+
+export interface CompleteSubscriptionRequest {
+  customerId: string
+  planId: string
+}
+
+export interface CompleteSubscriptionResponse {
+  subscription: UserSubscription
+  message: string
+}
+
+// Track ongoing setup requests to prevent duplicates
+const ongoingSetupRequests = new Map<string, Promise<SubscriptionSetupResponse>>()
+
 export const subscriptionApi = {
   /**
    * Get all available subscription plans
@@ -207,7 +239,79 @@ export const subscriptionApi = {
   },
 
   /**
-   * Create a new subscription for the user
+   * Setup subscription payment method
+   * @param setupData - Subscription setup data
+   */
+  setupSubscription: async (setupData: SubscriptionSetupRequest): Promise<SubscriptionSetupResponse> => {
+    // Create a unique key for this request to deduplicate calls
+    const requestKey = `${setupData.planId}-${setupData.billingCycle}-${setupData.email}`
+    
+    // If there's already an ongoing request for this exact setup, return that promise
+    if (ongoingSetupRequests.has(requestKey)) {
+      console.log('Reusing existing setup request for:', requestKey)
+      return ongoingSetupRequests.get(requestKey)!
+    }
+
+    // Create the promise for this request
+    const setupPromise = (async (): Promise<SubscriptionSetupResponse> => {
+      try {
+        console.log('Making setup request with data:', setupData)
+        
+        const response = await subscriptionClient.post<ApiResponse<SubscriptionSetupResponse>>(
+          '/api/v1/subscriptions/setup',
+          setupData
+        )
+        
+        console.log('Setup response received:', response.data)
+        
+        if (!response.data.success) {
+          throw new Error(response.data.message || 'Failed to setup subscription')
+        }
+        
+        return response.data.data
+      } catch (error: any) {
+        console.error('Failed to setup subscription:', error)
+        console.error('Error response:', error.response?.data)
+        console.error('Error status:', error.response?.status)
+        const message = error.response?.data?.message || error.message || 'Failed to setup subscription'
+        throw new Error(message)
+      } finally {
+        // Clean up the ongoing request when done
+        ongoingSetupRequests.delete(requestKey)
+      }
+    })()
+
+    // Store the promise to handle duplicate requests
+    ongoingSetupRequests.set(requestKey, setupPromise)
+    
+    return setupPromise
+  },
+
+  /**
+   * Complete subscription after payment setup
+   * @param customerId - Stripe customer ID
+   * @param planId - Subscription plan ID
+   */
+  completeSubscription: async (customerId: string, planId: string): Promise<UserSubscription> => {
+    try {
+      const response = await subscriptionClient.post<ApiResponse<UserSubscription>>(
+        `/api/v1/subscriptions/complete?customerId=${encodeURIComponent(customerId)}&planId=${encodeURIComponent(planId)}`
+      )
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to complete subscription')
+      }
+      
+      return response.data.data
+    } catch (error: any) {
+      console.error('Failed to complete subscription:', error)
+      const message = error.response?.data?.message || error.message || 'Failed to complete subscription'
+      throw new Error(message)
+    }
+  },
+
+  /**
+   * Create a new subscription for the user (legacy method)
    * @param subscriptionData - Subscription creation data
    */
   createSubscription: async (subscriptionData: CreateSubscriptionRequest): Promise<CreateSubscriptionResponse> => {

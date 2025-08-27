@@ -187,23 +187,18 @@ export default function SubscriptionPage() {
     if (!selectedPlan) return
 
     try {
-      // Activate the subscription after it was created in the payment form
-      if (subscriptionId) {
-        await activateSubscription(subscriptionId)
-      }
-      
       setShowPaymentForm(false)
       setSelectedPlan(null)
       toast({
-        title: "Payment Successful",
+        title: "Subscription Successful",
         description: `Successfully subscribed to ${selectedPlan.name} plan!`,
       })
     } catch (error) {
       console.error('Error after payment success:', error)
       toast({
-        title: "Activation Error",
-        description: "Payment was processed but subscription activation failed. Please contact support.",
-        variant: "destructive"
+        title: "Success with Note",
+        description: "Subscription was successful. The page will refresh to show your new plan.",
+        variant: "default"
       })
     }
   }

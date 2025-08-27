@@ -74,12 +74,9 @@ export const pointsApi = {
    */
   getTransactionHistory: async (page: number = 0, size: number = 20): Promise<PaginatedResponse<PointsTransaction>> => {
     try {
-      console.log('Fetching transaction history:', { page, size })
       const response = await subscriptionClient.get<ApiResponse<PaginatedResponse<PointsTransaction>>>(
         `/api/v1/points/transactions?page=${page}&size=${size}`
       )
-      
-      console.log('Transaction history response:', response.data)
       
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch transaction history')
@@ -88,7 +85,6 @@ export const pointsApi = {
       return response.data.data
     } catch (error: any) {
       console.error('Failed to fetch transaction history:', error)
-      console.error('Error response:', error.response?.data)
       const message = error.response?.data?.message || error.message || 'Failed to fetch transaction history'
       throw new Error(message)
     }

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import {
   Elements,
@@ -11,13 +11,20 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, CreditCard, Shield, CheckCircle } from 'lucide-react'
-import { paymentApi } from '@/lib/api/payment'
 import { useSubscription } from '@/hooks/use-subscription'
+import { subscriptionApi } from '@/lib/api/subscription'
 import { useToast } from '@/hooks/use-toast'
 import type { SubscriptionPlan } from '@/lib/api/subscription'
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+
+// Add debug logging for Stripe key
+if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+  console.error('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set')
+} else {
+  console.log('Stripe key present:', process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.substring(0, 10) + '...')
+}
 
 interface PaymentFormProps {
   plan: SubscriptionPlan
@@ -39,37 +46,102 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   const stripe = useStripe()
   const elements = useElements()
   const { toast } = useToast()
-  const { createSubscription, isCreatingSubscription } = useSubscription()
+  const { completeSubscription, isCompletingSubscription } = useSubscription()
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isSettingUp, setIsSettingUp] = useState(false)
   const [clientSecret, setClientSecret] = useState<string>('')
-  const [paymentIntentId, setPaymentIntentId] = useState<string>('')
+  const [customerId, setCustomerId] = useState<string>('')
+  const [setupComplete, setSetupComplete] = useState(false)
+  const [setupInitialized, setSetupInitialized] = useState(false)
+  const [cardComplete, setCardComplete] = useState(false)
+  
+  // Track the current initialization key to prevent unnecessary re-initializations
+  const initKeyRef = useRef<string>('')
+  const initializationStartedRef = useRef<boolean>(false)
 
-  // Create payment intent when component mounts
+  // Setup subscription when component mounts
   useEffect(() => {
-    const initializePayment = async () => {
+    const currentInitKey = `${plan.id}-${billingCycle}-${userEmail}`
+    
+    // If we've already started initialization, don't do it again
+    if (initializationStartedRef.current) {
+      console.log('Initialization already started, skipping')
+      return
+    }
+    
+    // If we already initialized with the same parameters, don't do it again
+    if (setupInitialized && initKeyRef.current === currentInitKey) {
+      console.log('Setup already initialized for key:', currentInitKey)
+      return
+    }
+    
+    // If already in progress, don't start another
+    if (isSettingUp) {
+      console.log('Setup already in progress, skipping')
+      return
+    }
+    
+    // Only initialize once per unique combination
+    if (initKeyRef.current === currentInitKey) {
+      console.log('Already processed this key:', currentInitKey)
+      return
+    }
+    
+    const initializeSetup = async () => {
       try {
-        const paymentIntent = await paymentApi.createPaymentIntent({
-          planId: plan.id,
-          amount: plan.price,
-          currency: plan.currency,
-          email: userEmail
-        })
+        console.log('Starting setup initialization for key:', currentInitKey)
+        initializationStartedRef.current = true
+        setIsSettingUp(true)
+        initKeyRef.current = currentInitKey
         
-        setClientSecret(paymentIntent.clientSecret)
-        setPaymentIntentId(paymentIntent.paymentIntentId)
+        const requestData = {
+          planId: plan.id,
+          billingCycle: billingCycle,
+          email: userEmail
+        }
+        
+        console.log('Initializing setup with data:', requestData)
+        console.log('Plan object:', plan)
+        
+        const setupResponse = await subscriptionApi.setupSubscription(requestData)
+        
+        // Extract fields using the actual backend response structure
+        const clientSecret = setupResponse.setup_intent_client_secret || setupResponse.clientSecret
+        const customerId = setupResponse.customer_id || setupResponse.customerId
+        
+        setClientSecret(clientSecret || '')
+        setCustomerId(customerId || '')
+        setSetupInitialized(true) // Only set after successful API call
+        
+        if (!clientSecret || !customerId) {
+          throw new Error('Setup response missing required fields: clientSecret or customerId')
+        }
+        
+        console.log('Setup initialization completed successfully')
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to initialize payment'
+        console.error('Setup initialization failed:', error)
+        console.error('Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          response: (error as any)?.response?.data || 'No response data'
+        })
+        const errorMessage = error instanceof Error ? error.message : 'Failed to initialize payment setup'
         onError(errorMessage)
+        setSetupInitialized(false) // Reset on error so it can be retried
+        initKeyRef.current = '' // Reset the key on error
+        initializationStartedRef.current = false // Reset the flag on error
+      } finally {
+        setIsSettingUp(false)
       }
     }
 
-    initializePayment()
-  }, [plan, userEmail, onError])
+    initializeSetup()
+  }, [plan.id, billingCycle, userEmail])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     
-    if (!stripe || !elements || !clientSecret) {
+    if (!stripe || !elements || !clientSecret || !customerId) {
       return
     }
 
@@ -82,58 +154,66 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         throw new Error('Card element not found')
       }
 
-      // Create payment method
-      const { error: paymentMethodError, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardElement,
-        billing_details: {
-          email: userEmail,
+      // Confirm setup intent
+      const { error: setupError, setupIntent } = await stripe.confirmCardSetup(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            email: userEmail,
+          },
         },
       })
 
-      if (paymentMethodError) {
-        throw new Error(paymentMethodError.message)
+      if (setupError) {
+        throw new Error(setupError.message)
       }
 
-      // Confirm payment intent
-      const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: paymentMethod.id
-      })
-
-      if (confirmError) {
-        throw new Error(confirmError.message)
-      }
-
-      if (paymentIntent?.status === 'succeeded') {
-        // Create the subscription after successful payment
+      if (setupIntent?.status === 'succeeded') {
+        setSetupComplete(true)
+        
+        // Complete the subscription after successful payment method setup
         try {
-          const subscriptionResponse = await createSubscription({
-            planId: plan.id,
-            billingCycle: billingCycle,
-            email: userEmail
-          })
+          const subscription = await completeSubscription(customerId, plan.id)
           
-          toast({
-            title: 'Payment Successful!',
-            description: `Successfully subscribed to ${plan.name}`,
-          })
-          onSuccess(subscriptionResponse.subscriptionId)
+          // Check the actual subscription status
+          if (subscription.status === 'ACTIVE') {
+            toast({
+              title: 'Subscription Activated!',
+              description: `Welcome to ${plan.name}! Your subscription is now active.`,
+            })
+            onSuccess(subscription.id)
+          } else if (subscription.status === 'PENDING') {
+            toast({
+              title: 'Subscription Created',
+              description: `Your ${plan.name} subscription is being processed. You'll be notified once it's active.`,
+            })
+            onSuccess(subscription.id)
+          } else {
+            toast({
+              title: 'Subscription Status: ' + subscription.status,
+              description: `Your subscription has been created with status: ${subscription.status}`,
+            })
+            onSuccess(subscription.id)
+          }
         } catch (subscriptionError) {
           const subscriptionErrorMessage = subscriptionError instanceof Error 
             ? subscriptionError.message 
-            : 'Failed to create subscription'
-          onError(`Payment succeeded but subscription creation failed: ${subscriptionErrorMessage}`)
+            : 'Failed to complete subscription'
+          onError(`Payment method setup succeeded but subscription creation failed: ${subscriptionErrorMessage}`)
         }
       } else {
-        throw new Error('Payment not completed')
+        throw new Error('Payment method setup not completed')
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Payment failed'
+      const errorMessage = error instanceof Error ? error.message : 'Payment setup failed'
       onError(errorMessage)
     } finally {
       setIsProcessing(false)
     }
   }
+
+  const isLoading = isSettingUp || isProcessing || isCompletingSubscription
+  const isButtonDisabled = !stripe || isLoading || !clientSecret || !cardComplete
 
   return (
     <div className="w-full">
@@ -145,6 +225,31 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         </div>
       </div>
 
+      {/* Setup Complete Status */}
+      {setupComplete && (
+        <div className="bg-green-50 p-3 rounded-lg mb-4">
+          <div className="flex items-center gap-2 text-green-700">
+            <CheckCircle className="h-4 w-4" />
+            <span className="text-sm font-medium">Payment method setup complete</span>
+          </div>
+        </div>
+      )}
+
+      {/* Debug Information (only in development) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-yellow-50 p-3 rounded-lg mb-4 text-xs">
+          <div className="font-medium text-yellow-800 mb-2">Debug Info:</div>
+          <div className="space-y-1 text-yellow-700">
+            <div>Stripe: {stripe ? '✅ Loaded' : '❌ Loading...'}</div>
+            <div>Client Secret: {clientSecret ? '✅ Present' : '❌ Missing'}</div>
+            <div>Customer ID: {customerId ? '✅ Present' : '❌ Missing'}</div>
+            <div>Card Complete: {cardComplete ? '✅ Yes' : '❌ No'}</div>
+            <div>Setup Loading: {isSettingUp ? '🔄 Yes' : '✅ No'}</div>
+            <div>Button Disabled: {isButtonDisabled ? '❌ Yes' : '✅ No'}</div>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -152,6 +257,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           </label>
           <div className="border rounded-lg p-3 bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
             <CardElement
+              onChange={(event) => {
+                setCardComplete(event.complete)
+              }}
               options={{
                 style: {
                   base: {
@@ -174,8 +282,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         {/* Compact Summary */}
         <div className="bg-gray-50 p-3 rounded-lg border">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Total Amount:</span>
-            <span className="font-bold text-lg text-gray-900">${plan.price}</span>
+            <span className="text-sm text-gray-600">Subscription Amount:</span>
+            <span className="font-bold text-lg text-gray-900">${plan.price}/{plan.billingCycle.toLowerCase()}</span>
+          </div>
+          <div className="flex justify-between items-center mt-1">
+            <span className="text-xs text-gray-500">Points Awarded:</span>
+            <span className="text-xs font-medium text-gray-700">{plan.pointsAwarded} points</span>
           </div>
         </div>
 
@@ -185,30 +297,35 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             type="button"
             variant="outline"
             onClick={onCancel}
-            disabled={isProcessing}
+            disabled={isLoading}
             className="flex-1 h-11"
           >
             Cancel
           </Button>
           <Button
             type="submit"
-            disabled={!stripe || isProcessing || !clientSecret}
-            className="flex-1 h-11 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+            disabled={isButtonDisabled}
+            className="flex-1 h-11 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isProcessing ? (
+            {isSettingUp ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Setting up...
+              </>
+            ) : isProcessing ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Processing...
               </>
-            ) : isCreatingSubscription ? (
+            ) : isCompletingSubscription ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creating Subscription...
+                Completing...
               </>
             ) : (
               <>
                 <CreditCard className="h-4 w-4 mr-2" />
-                Pay ${plan.price}
+                Subscribe Now
               </>
             )}
           </Button>
@@ -216,7 +333,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       </form>
 
       <div className="text-xs text-gray-500 text-center mt-4">
-        Secure payment powered by Stripe
+        Secure payment powered by Stripe • No setup fees
       </div>
     </div>
   )

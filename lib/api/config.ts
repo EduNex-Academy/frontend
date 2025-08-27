@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Microservice configurations
 const MICROSERVICES = {
-  AUTH: process.env.NEXT_PUBLIC_AUTH_API_URL || 'http://localhost:8081/api',
+  AUTH: process.env.NEXT_PUBLIC_AUTH_API_URL || 'https://auth-api.edunex.app/api',
   SUBSCRIPTION: process.env.NEXT_PUBLIC_SUBSCRIPTION_API_URL || 'http://localhost:8083',
   // Add more microservices here as needed
   // COURSE: process.env.NEXT_PUBLIC_COURSE_API_URL || 'http://localhost:8084',

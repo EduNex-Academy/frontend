@@ -1,7 +1,7 @@
 import type { AuthResponse } from '@/types'
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://auth-api.edunex.app/api'
 
 /**
  * Token manager utility for handling token refresh
