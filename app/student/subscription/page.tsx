@@ -12,6 +12,8 @@ import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import StripePaymentForm from "@/components/payment/StripePaymentForm"
 import StripeProvider from "@/components/payment/StripeProvider"
+import PaymentMethods from "@/components/payment/PaymentMethods"
+import BillingHistory from "@/components/billing/BillingHistory"
 import PointsWallet from "@/components/points/PointsWallet"
 import type { SubscriptionPlan } from "@/lib/api/subscription"
 
@@ -76,27 +78,6 @@ const planConfig: Record<string, {
   }
 }
 
-const paymentMethods = [
-  {
-    id: "1",
-    type: "card",
-    last4: "4242",
-    brand: "Visa",
-    expiryMonth: 12,
-    expiryYear: 2025,
-    isDefault: true,
-  },
-  {
-    id: "2",
-    type: "card",
-    last4: "5555",
-    brand: "Mastercard",
-    expiryMonth: 8,
-    expiryYear: 2024,
-    isDefault: false,
-  },
-]
-
 export default function SubscriptionPage() {
   const { toast } = useToast()
   const { user } = useAuth()
@@ -134,30 +115,6 @@ export default function SubscriptionPage() {
       } as DisplayPlan
     }).filter(plan => plan.isActive)
   }, [groupedPlans, billingCycle])
-  
-  const [billingHistory] = useState([
-    {
-      id: "1",
-      date: "2024-01-15",
-      amount: currentPlan?.price || 0,
-      status: "paid",
-      plan: currentPlan ? `${currentPlan.name} ${currentPlan.billingCycle.toLowerCase()}` : "Unknown",
-    },
-    {
-      id: "2", 
-      date: "2023-12-15",
-      amount: currentPlan?.price || 0,
-      status: "paid",
-      plan: currentPlan ? `${currentPlan.name} ${currentPlan.billingCycle.toLowerCase()}` : "Unknown",
-    },
-    {
-      id: "3",
-      date: "2023-11-15", 
-      amount: currentPlan?.price || 0,
-      status: "paid",
-      plan: currentPlan ? `${currentPlan.name} ${currentPlan.billingCycle.toLowerCase()}` : "Unknown",
-    },
-  ])
 
   const handleUpgrade = async (plan: DisplayPlan) => {
     if (!user) {
@@ -231,14 +188,6 @@ export default function SubscriptionPage() {
       // Error is already handled in the hook with toast
       console.error('Failed to cancel subscription:', error)
     }
-  }
-
-  const handleAddPaymentMethod = () => {
-    // TODO: Implement payment method addition
-    toast({
-      title: "Coming Soon",
-      description: "Payment method management will be available soon.",
-    })
   }
 
   // Loading state
@@ -525,110 +474,11 @@ export default function SubscriptionPage() {
           </TabsContent>
 
           <TabsContent value="billing" className="space-y-6">
-            <Card className="bg-white/80 backdrop-blur-sm border-blue-200/30 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Receipt className="w-5 h-5 text-blue-600" />
-                  Billing History
-                </CardTitle>
-                <CardDescription>View your past payments and invoices</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {billingHistory.map((bill) => (
-                    <div
-                      key={bill.id}
-                      className="flex items-center justify-between p-6 border border-blue-200/30 rounded-xl bg-white/60 backdrop-blur-sm hover:shadow-md transition-all duration-300 hover:border-blue-300/50"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div className={`p-3 rounded-full ${bill.status === "paid" ? "bg-green-100" : "bg-red-100"
-                          }`}>
-                          {bill.status === "paid" ? (
-                            <CheckCircle className="h-5 w-5 text-green-600" />
-                          ) : (
-                            <XCircle className="h-5 w-5 text-red-600" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">{bill.plan}</p>
-                          <p className="text-sm text-gray-600">{new Date(bill.date).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xl font-bold text-gray-900">${bill.amount}</p>
-                        <Badge
-                          variant={bill.status === "paid" ? "default" : "destructive"}
-                          className={`${bill.status === "paid" ? "bg-green-100 text-green-700 hover:bg-green-200" : ""}`}
-                        >
-                          {bill.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <BillingHistory />
           </TabsContent>
 
           <TabsContent value="payment" className="space-y-6">
-            <Card className="bg-white/80 backdrop-blur-sm border-blue-200/30 shadow-lg">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <CreditCard className="w-5 h-5 text-blue-600" />
-                      Payment Methods
-                    </CardTitle>
-                    <CardDescription>Manage your payment methods</CardDescription>
-                  </div>
-                  <Button
-                    onClick={handleAddPaymentMethod}
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full px-6 py-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                  >
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Add Payment Method
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {paymentMethods.map((method) => (
-                    <div
-                      key={method.id}
-                      className="flex items-center justify-between p-6 border border-blue-200/30 rounded-xl bg-white/60 backdrop-blur-sm hover:shadow-md transition-all duration-300 hover:border-blue-300/50"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div className="p-3 bg-blue-100 rounded-full">
-                          <CreditCard className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            {method.brand} ending in {method.last4}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            Expires {method.expiryMonth}/{method.expiryYear}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        {method.isDefault && (
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-700 border border-blue-200">
-                            Default
-                          </Badge>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="rounded-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
-                        >
-                          Edit
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <PaymentMethods />
           </TabsContent>
 
           <TabsContent value="points">
