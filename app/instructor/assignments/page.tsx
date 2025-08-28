@@ -34,6 +34,22 @@ export default function InstructorAssignmentsPage() {
       totalMarks: 100,
       resources: ["https://expressjs.com/"],
     },
+    {
+      id: 3,
+      title: "UI/UX Design Challenge",
+      description: "Design a user-friendly dashboard for a learning platform.",
+      dueDate: "2025-09-05",
+      totalMarks: 60,
+      resources: ["https://www.smashingmagazine.com/category/design/"],
+    },
+    {
+      id: 4,
+      title: "Python Data Analysis",
+      description: "Analyze a dataset using pandas and visualize results.",
+      dueDate: "2025-09-12",
+      totalMarks: 80,
+      resources: ["https://pandas.pydata.org/docs/"],
+    },
   ]);
 
   const [newAssignment, setNewAssignment] = useState<Assignment>({
@@ -102,13 +118,6 @@ export default function InstructorAssignmentsPage() {
                 <CardContent className="space-y-2">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-blue-900">{a.title}</h3>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => deleteAssignment(a.id)}
-                    >
-                      Delete
-                    </Button>
                   </div>
                   <p className="text-gray-700">{a.description}</p>
                   <div className="flex flex-wrap gap-4 text-sm text-gray-600">
@@ -151,13 +160,6 @@ export default function InstructorAssignmentsPage() {
                 <CardContent className="space-y-2">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-blue-900">{a.title}</h3>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => deleteAssignment(a.id)}
-                    >
-                      Delete
-                    </Button>
                   </div>
                   <p className="text-gray-700">{a.description}</p>
                   <div className="flex flex-wrap gap-4 text-sm text-gray-600">
