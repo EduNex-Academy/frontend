@@ -34,6 +34,12 @@ export default function CreateCourse() {
     setCourse({ ...course, [field]: [...(course as any)[field], emptyValue] })
   }
 
+  const deleteField = (field: string, index: number) => {
+    const updated = [...(course as any)[field]];
+    updated.splice(index, 1);
+    setCourse({ ...course, [field]: updated });
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     console.log("Course Data:", course)
@@ -91,7 +97,7 @@ export default function CreateCourse() {
           <div>
             <h2 className="font-semibold text-blue-700 mb-2">Modules</h2>
             {course.modules.map((module, i) => (
-              <div key={i} className="border border-blue-200 rounded-xl p-4 mb-3 bg-blue-50/30">
+              <div key={i} className="border border-blue-200 rounded-xl p-4 mb-3 bg-blue-50/30 flex flex-col relative">
                 <Input
                   type="text"
                   placeholder="Module Title"
@@ -105,6 +111,18 @@ export default function CreateCourse() {
                   onChange={(e) => handleArrayChange("modules", i, e.target.value, "content")}
                   className="rounded-xl border-blue-200 focus:ring-2 focus:ring-blue-400"
                 />
+                {course.modules.length > 1 && i > 0 && (
+                  <div className="flex justify-end mt-2">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteField("modules", i)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
             <Button
@@ -120,14 +138,27 @@ export default function CreateCourse() {
           <div>
             <h2 className="font-semibold text-blue-700 mb-2">Quizzes</h2>
             {course.quizzes.map((quiz, i) => (
-              <Input
-                key={i}
-                type="text"
-                placeholder={`Quiz ${i + 1}`}
-                value={quiz}
-                onChange={(e) => handleArrayChange("quizzes", i, e.target.value)}
-                className="mb-2 h-11 rounded-xl border-blue-200 focus:ring-2 focus:ring-blue-400"
-              />
+              <div key={i} className="flex flex-col relative">
+                <Input
+                  type="text"
+                  placeholder={`Quiz ${i + 1}`}
+                  value={quiz}
+                  onChange={(e) => handleArrayChange("quizzes", i, e.target.value)}
+                  className="mb-2 h-11 rounded-xl border-blue-200 focus:ring-2 focus:ring-blue-400"
+                />
+                {course.quizzes.length > 1 && i > 0 && (
+                  <div className="flex justify-end mt-2">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteField("quizzes", i)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                )}
+              </div>
             ))}
             <Button
               type="button"
@@ -143,14 +174,27 @@ export default function CreateCourse() {
           <div>
             <h2 className="font-semibold text-blue-700 mb-2">Prerequisite Courses</h2>
             {course.prerequisites.map((pre, i) => (
-              <Input
-                key={i}
-                type="text"
-                placeholder={`Prerequisite ${i + 1}`}
-                value={pre}
-                onChange={(e) => handleArrayChange("prerequisites", i, e.target.value)}
-                className="mb-2 h-11 rounded-xl border-blue-200 focus:ring-2 focus:ring-blue-400"
-              />
+              <div key={i} className="flex flex-col relative">
+                <Input
+                  type="text"
+                  placeholder={`Prerequisite ${i + 1}`}
+                  value={pre}
+                  onChange={(e) => handleArrayChange("prerequisites", i, e.target.value)}
+                  className="mb-2 h-11 rounded-xl border-blue-200 focus:ring-2 focus:ring-blue-400"
+                />
+                {course.prerequisites.length > 1 && i > 0 && (
+                  <div className="flex justify-end mt-2">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteField("prerequisites", i)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                )}
+              </div>
             ))}
             <Button
               type="button"
