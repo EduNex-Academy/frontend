@@ -1,54 +1,6 @@
 import type { User, Subscription, Progress, Certificate, EmailNotification } from "@/types"
 import type { Course } from "@/types/course"
 
-export const mockUsers: User[] = [
-  {
-    id: "1",
-    username: "John Doe",
-    firstName: "John",
-    lastName: "Doe",
-    email: "john@example.com",
-    phoneNumber: "+1234567890",
-    profilePictureUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=john",
-    role: "student",
-    isActive: true,
-    createdAt: "2024-01-15",
-    lastLoginAt: "2024-01-25",
-    subscriptionStatus: "active",
-    subscriptionExpiresAt: "2024-12-31",
-  },
-  {
-    id: "2",
-    username: "Jane Smith",
-    firstName: "Jane",
-    lastName: "Smith",
-    email: "jane@example.com",
-    phoneNumber: "+1987654321",
-    profilePictureUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=jane",
-    role: "instructor",
-    isActive: true,
-    createdAt: "2024-01-10",
-    lastLoginAt: "2024-01-24",
-    subscriptionStatus: "inactive",
-    subscriptionExpiresAt: "2023-12-31",
-  },
-  {
-    id: "3",
-    username: "Mike Johnson",
-    firstName: "Mike",
-    lastName: "Johnson",
-    email: "mike@example.com",
-    phoneNumber: "+1122334455",
-    profilePictureUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=mike",
-    role: "student",
-    isActive: false,
-    createdAt: "2024-01-20",
-    lastLoginAt: "2024-01-25",
-    subscriptionStatus: "active",
-    subscriptionExpiresAt: "2024-07-15",
-  },
-]
-
 export const mockSubscriptions: Subscription[] = [
   {
     id: "1",

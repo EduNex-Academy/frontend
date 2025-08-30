@@ -16,6 +16,7 @@ import {
 } from "recharts";
 
 export default function InstructorAnalyticsPage() {
+  const [selectedAssignment, setSelectedAssignment] = useState<number | null>(null);
   const [studentsData] = useState([
     { course: "React Basics", students: 120 },
     { course: "Node.js Advanced", students: 85 },
@@ -23,10 +24,32 @@ export default function InstructorAnalyticsPage() {
     { course: "AI Fundamentals", students: 45 },
   ]);
 
-  const [assignmentsData] = useState([
-    { name: "Completed", value: 35 },
-    { name: "Pending", value: 15 },
+  // Assignments with module and course info
+  const [assignmentsList, setAssignmentsList] = useState([
+    { title: "React Components", module: "Module 1", course: "React Basics", finished: 30, pending: 10 },
+    { title: "Express API", module: "Module 2", course: "Node.js Advanced", finished: 20, pending: 5 },
+    { title: "SQL Queries", module: "Module 1", course: "Database Systems", finished: 10, pending: 5 },
+    { title: "AI Project", module: "Module 3", course: "AI Fundamentals", finished: 5, pending: 2 },
   ]);
+  // Refresh pie chart data
+  const handleRefresh = () => {
+    setAssignmentsList(list =>
+      list.map(a => ({
+        ...a,
+        finished: Math.floor(Math.random() * 40) + 5,
+        pending: Math.floor(Math.random() * 15) + 2,
+      }))
+    );
+    setSelectedAssignment(null);
+  };
+
+  // Pie chart data for finished/pending students (sum from assignmentsList)
+  const finishedTotal = assignmentsList.reduce((sum, a) => sum + a.finished, 0);
+  const pendingTotal = assignmentsList.reduce((sum, a) => sum + a.pending, 0);
+  const assignmentsData = [
+    { name: "Finished", value: finishedTotal },
+    { name: "Pending", value: pendingTotal },
+  ];
 
   const COLORS = ["#1E3A8A", "#3B82F6"]; // blue-themed
 
@@ -77,38 +100,91 @@ export default function InstructorAnalyticsPage() {
               <BarChart data={studentsData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                 <XAxis dataKey="course" stroke="#1E3A8A" />
                 <YAxis stroke="#1E3A8A" />
-                <Tooltip />
-                <Bar dataKey="students" fill="#3B82F6" />
+                <Tooltip
+                  cursor={false}
+                  content={({ active, payload }) =>
+                    active && payload && payload.length ? (
+                      <div className="bg-white p-2 rounded shadow text-blue-900 font-bold">
+                        {payload[0].value}
+                      </div>
+                    ) : null
+                  }
+                />
+                <Bar dataKey="students" fill="#3B82F6" barSize={40} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Assignments Pie Chart */}
+        {/* Assignment Completion List & Pie Chart */}
         <Card className="shadow-md border-blue-200">
           <CardHeader>
-            <CardTitle className="text-blue-800">Assignments Completion</CardTitle>
+            <CardTitle className="text-blue-800">Assignments</CardTitle>
           </CardHeader>
-          <CardContent className="flex justify-center">
-            <ResponsiveContainer width="50%" height={300}>
-              <PieChart>
-                <Pie
-                  data={assignmentsData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  fill="#3B82F6"
-                  label
-                >
-                  {assignmentsData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          <CardContent>
+            
+            <div className="mb-6">
+              <table className="w-full text-left table-auto border-collapse">
+                <thead>
+                  <tr className="bg-blue-100 text-blue-900">
+                    <th className="p-4 w-1/4">Assignment</th>
+                    <th className="p-4 w-1/5">Module</th>
+                    <th className="p-4 w-1/5">Course</th>
+                    <th className="p-4 w-1/6">Finished</th>
+                    <th className="p-4 w-1/6">Pending</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assignmentsList.map((a, i) => (
+                    <tr
+                      key={i}
+                      className="border-b border-blue-100 cursor-pointer hover:bg-blue-50 transition"
+                      onClick={() => setSelectedAssignment(i)}
+                    >
+                      <td className="p-4 font-semibold text-blue-900">{a.title}</td>
+                      <td className="p-4 text-blue-700">{a.module}</td>
+                      <td className="p-4 text-blue-700">{a.course}</td>
+                      <td className="p-4 text-green-700 font-bold">{a.finished}</td>
+                      <td className="p-4 text-orange-700 font-bold">{a.pending}</td>
+                    </tr>
                   ))}
-                </Pie>
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-center">
+              {selectedAssignment !== null && (
+                <div className="animate-fade-in mt-8">
+                  <ResponsiveContainer width="40%" height={260}>
+                    <PieChart>
+                      <Pie
+                        data={[{ name: "Finished", value: assignmentsList[selectedAssignment].finished }, { name: "Pending", value: assignmentsList[selectedAssignment].pending }]}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={90}
+                        fill="#3B82F6"
+                        label
+                      >
+                        <Cell key="cell-0" fill={COLORS[0]} />
+                        <Cell key="cell-1" fill={COLORS[1]} />
+                      </Pie>
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+<style>{`
+  .animate-fade-in {
+    animation: fadeIn 0.6s;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+`}</style>
+            </div>
           </CardContent>
         </Card>
       </div>

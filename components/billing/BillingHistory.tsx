@@ -7,29 +7,7 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle, XCircle, Receipt, ExternalLink, Loader2, AlertCircle } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
-import { getPaymentApiUrl } from "@/lib/api/endpoints"
-
-interface BillingHistoryItem {
-  id: string
-  description: string
-  date: string
-  amount: number
-  currency: string
-  status: string
-  invoiceUrl?: string
-  paymentMethod: string
-  subscriptionName: string
-}
-
-interface BillingHistoryResponse {
-  success: boolean
-  message: string
-  data: {
-    history: BillingHistoryItem[]
-    totalCount: number
-    hasMore: boolean
-  }
-}
+import { paymentApi, type BillingHistoryItem } from "@/lib/api/payment"
 
 export default function BillingHistory() {
   const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([])
@@ -43,30 +21,15 @@ export default function BillingHistory() {
       setLoading(true)
       setError(null)
       
-      const response = await fetch(getPaymentApiUrl('api/v1/payments/billing-history?limit=50'), {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      
-      const data: BillingHistoryResponse = await response.json()
-      
-      if (data.success) {
-        setBillingHistory(data.data.history)
-      } else {
-        throw new Error(data.message || 'Failed to fetch billing history')
-      }
+      const data = await paymentApi.getBillingHistory(50)
+      setBillingHistory(data.history)
     } catch (error) {
       console.error('Failed to fetch billing history:', error)
-      setError('Failed to load billing history. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load billing history. Please try again.'
+      setError(errorMessage)
       toast({
         title: "Error",
-        description: "Failed to load billing history. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {

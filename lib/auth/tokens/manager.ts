@@ -1,7 +1,7 @@
 import type { AuthResponse } from '@/types'
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://auth-api.edunex.app/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8090/api'
 
 /**
  * Token manager utility for handling token refresh
@@ -38,21 +38,6 @@ export class TokenManager {
       const response = await axios.post<AuthResponse>(`${API_BASE_URL}/auth/refresh`, {}, {
         withCredentials: true, // Include HttpOnly cookies
         headers: { 'Content-Type': 'application/json' }
-      })
-      return response.data
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Token refresh failed'
-      throw new Error(message)
-    }
-  }
-
-  /**
-   * Legacy method for refreshing token with refresh token (for backward compatibility)
-   */
-  static async refreshToken(refreshToken: string): Promise<AuthResponse> {
-    try {
-      const response = await axios.post<AuthResponse>(`${API_BASE_URL}/auth/refresh`, {
-        refreshToken
       })
       return response.data
     } catch (error: any) {

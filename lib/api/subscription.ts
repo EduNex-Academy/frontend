@@ -1,4 +1,4 @@
-import { subscriptionClient } from './config'
+import { apiClient } from './config'
 
 // Generic API response wrapper
 interface ApiResponse<T> {
@@ -114,7 +114,7 @@ export const subscriptionApi = {
    */
   getAllPlans: async (): Promise<SubscriptionPlan[]> => {
     try {
-      const response = await subscriptionClient.get<SubscriptionPlansResponse>('/api/v1/subscription-plans')
+      const response = await apiClient.get<SubscriptionPlansResponse>('/v1/subscription-plans')
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch subscription plans')
       }
@@ -132,7 +132,7 @@ export const subscriptionApi = {
    */
   getPlanById: async (planId: string): Promise<SubscriptionPlan> => {
     try {
-      const response = await subscriptionClient.get<SubscriptionPlanResponse>(`/api/v1/subscription-plans/${planId}`)
+      const response = await apiClient.get<SubscriptionPlanResponse>(`/v1/subscription-plans/${planId}`)
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch subscription plan')
       }
@@ -150,7 +150,7 @@ export const subscriptionApi = {
    */
   getPlansByName: async (planName: string): Promise<SubscriptionPlan[]> => {
     try {
-      const response = await subscriptionClient.get<SubscriptionPlansResponse>(`/api/v1/subscription-plans/by-name/${planName}`)
+      const response = await apiClient.get<SubscriptionPlansResponse>(`/v1/subscription-plans/by-name/${planName}`)
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch subscription plans')
       }
@@ -167,7 +167,7 @@ export const subscriptionApi = {
    */
   getUserSubscriptions: async (): Promise<UserSubscription[]> => {
     try {
-      const response = await subscriptionClient.get<UserSubscriptionsResponse>('/api/v1/subscriptions/user')
+      const response = await apiClient.get<UserSubscriptionsResponse>('/v1/subscriptions/user')
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch user subscriptions')
       }
@@ -184,7 +184,7 @@ export const subscriptionApi = {
    */
   getActiveSubscription: async (): Promise<UserSubscription | null> => {
     try {
-      const response = await subscriptionClient.get<UserSubscriptionResponse>('/api/v1/subscriptions/user/active')
+      const response = await apiClient.get<UserSubscriptionResponse>('/v1/subscriptions/user/active')
       if (!response.data.success) {
         // If no active subscription found, return null instead of throwing error
         if (response.status === 404) {
@@ -210,7 +210,7 @@ export const subscriptionApi = {
    */
   cancelSubscription: async (subscriptionId: string): Promise<void> => {
     try {
-      const response = await subscriptionClient.post(`/api/v1/subscriptions/${subscriptionId}/cancel`)
+      const response = await apiClient.post(`/v1/subscriptions/${subscriptionId}/cancel`)
       if (!response.data?.success) {
         throw new Error(response.data?.message || 'Failed to cancel subscription')
       }
@@ -227,7 +227,7 @@ export const subscriptionApi = {
    */
   activateSubscription: async (subscriptionId: string): Promise<void> => {
     try {
-      const response = await subscriptionClient.post(`/api/v1/subscriptions/${subscriptionId}/activate`)
+      const response = await apiClient.post(`/v1/subscriptions/${subscriptionId}/activate`)
       if (!response.data?.success) {
         throw new Error(response.data?.message || 'Failed to activate subscription')
       }
@@ -257,8 +257,8 @@ export const subscriptionApi = {
       try {
         console.log('Making setup request with data:', setupData)
         
-        const response = await subscriptionClient.post<ApiResponse<SubscriptionSetupResponse>>(
-          '/api/v1/subscriptions/setup',
+        const response = await apiClient.post<ApiResponse<SubscriptionSetupResponse>>(
+          '/v1/subscriptions/setup',
           setupData
         )
         
@@ -294,8 +294,8 @@ export const subscriptionApi = {
    */
   completeSubscription: async (customerId: string, planId: string): Promise<UserSubscription> => {
     try {
-      const response = await subscriptionClient.post<ApiResponse<UserSubscription>>(
-        `/api/v1/subscriptions/complete?customerId=${encodeURIComponent(customerId)}&planId=${encodeURIComponent(planId)}`
+      const response = await apiClient.post<ApiResponse<UserSubscription>>(
+        `/v1/subscriptions/complete?customerId=${encodeURIComponent(customerId)}&planId=${encodeURIComponent(planId)}`
       )
       
       if (!response.data.success) {
@@ -316,8 +316,8 @@ export const subscriptionApi = {
    */
   createSubscription: async (subscriptionData: CreateSubscriptionRequest): Promise<CreateSubscriptionResponse> => {
     try {
-      const response = await subscriptionClient.post<ApiResponse<CreateSubscriptionResponse>>(
-        '/api/v1/subscriptions/create',
+      const response = await apiClient.post<ApiResponse<CreateSubscriptionResponse>>(
+        '/v1/subscriptions/create',
         subscriptionData
       )
       

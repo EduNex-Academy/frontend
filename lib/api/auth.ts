@@ -96,13 +96,6 @@ export const authApi = {
     },
 
     /**
-     * Refresh access token (legacy method for backward compatibility)
-     */
-    refreshToken: async (refreshToken: string): Promise<AuthResponse> => {
-        return TokenManager.refreshToken(refreshToken)
-    },
-
-    /**
      * Logout user
      */
     logout: async (): Promise<void> => {

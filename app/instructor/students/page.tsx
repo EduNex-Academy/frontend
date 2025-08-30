@@ -6,14 +6,64 @@ interface Student {
   id: number;
   name: string;
   email: string;
-  enrolledCourses: number;
-  progress: number; // percentage
+  enrolledCourses: { id: string; title: string; progress: number }[];
 }
 
 const mockStudents: Student[] = [
-  { id: 1, name: "John Doe", email: "john@example.com", enrolledCourses: 3, progress: 75 },
-  { id: 2, name: "Jane Smith", email: "jane@example.com", enrolledCourses: 2, progress: 50 },
-  { id: 3, name: "Alice Brown", email: "alice@example.com", enrolledCourses: 1, progress: 100 },
+  {
+    id: 1,
+    name: "John Doe",
+    email: "john@example.com",
+    enrolledCourses: [
+      { id: "c1", title: "React Basics", progress: 75 },
+      { id: "c2", title: "Node.js Essentials", progress: 50 },
+      { id: "c3", title: "UI/UX Design", progress: 100 },
+    ],
+  },
+  {
+    id: 2,
+    name: "Jane Smith",
+    email: "jane@example.com",
+    enrolledCourses: [
+      { id: "c1", title: "React Basics", progress: 40 },
+      { id: "c4", title: "Python for Beginners", progress: 80 },
+    ],
+  },
+  {
+    id: 3,
+    name: "Alice Brown",
+    email: "alice@example.com",
+    enrolledCourses: [
+      { id: "c5", title: "Data Science", progress: 100 },
+    ],
+  },
+  {
+    id: 4,
+    name: "Michael Green",
+    email: "michael.green@example.com",
+    enrolledCourses: [
+      { id: "c6", title: "Machine Learning", progress: 60 },
+      { id: "c7", title: "Cloud Computing", progress: 30 },
+    ],
+  },
+  {
+    id: 5,
+    name: "Sara Lee",
+    email: "sara.lee@example.com",
+    enrolledCourses: [
+      { id: "c8", title: "Web Development", progress: 90 },
+      { id: "c9", title: "Cybersecurity", progress: 20 },
+      { id: "c10", title: "Business Analytics", progress: 55 },
+    ],
+  },
+  {
+    id: 6,
+    name: "David Kim",
+    email: "david.kim@example.com",
+    enrolledCourses: [
+      { id: "c11", title: "Mobile App Development", progress: 10 },
+    ],
+  },
 ];
 
 export default function InstructorStudentsPage() {
@@ -46,30 +96,35 @@ export default function InstructorStudentsPage() {
               <tr className="bg-blue-100 text-blue-900">
                 <th className="p-3">Name</th>
                 <th className="p-3">Email</th>
-                <th className="p-3">Enrolled Courses</th>
-                <th className="p-3">Progress</th>
+                <th className="p-3">Enrolled Courses & Progress</th>
               </tr>
             </thead>
             <tbody>
               {filteredStudents.map((student) => (
-                <tr key={student.id} className="border-b border-blue-200">
-                  <td className="p-3">{student.name}</td>
-                  <td className="p-3">{student.email}</td>
-                  <td className="p-3">{student.enrolledCourses}</td>
+                <tr key={student.id} className="border-b border-blue-200 align-top">
+                  <td className="p-3 font-semibold text-blue-900">{student.name}</td>
+                  <td className="p-3 text-blue-800">{student.email}</td>
                   <td className="p-3">
-                    <div className="w-full bg-blue-100 rounded-full h-4">
-                      <div
-                        className="bg-blue-600 h-4 rounded-full"
-                        style={{ width: `${student.progress}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-sm text-blue-800">{student.progress}%</span>
+                    <ul className="space-y-2">
+                      {student.enrolledCourses.map((course) => (
+                        <li key={course.id} className="mb-2">
+                          <div className="font-medium text-blue-700">{course.title}</div>
+                          <div className="w-full bg-blue-100 rounded-full h-4 mt-1">
+                            <div
+                              className="bg-blue-600 h-4 rounded-full"
+                              style={{ width: `${course.progress}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-xs text-blue-800">Progress: {course.progress}%</span>
+                        </li>
+                      ))}
+                    </ul>
                   </td>
                 </tr>
               ))}
               {filteredStudents.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="text-center text-blue-700 p-4">
+                  <td colSpan={3} className="text-center text-blue-700 p-4">
                     No students found.
                   </td>
                 </tr>
@@ -81,3 +136,4 @@ export default function InstructorStudentsPage() {
     </div>
   );
 }
+
