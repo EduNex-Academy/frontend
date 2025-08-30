@@ -1,4 +1,4 @@
-import { subscriptionClient } from './config'
+import { apiClient } from './config'
 
 // Points types
 export interface UserPointsWallet {
@@ -53,7 +53,7 @@ export const pointsApi = {
    */
   getUserWallet: async (): Promise<UserPointsWallet> => {
     try {
-      const response = await subscriptionClient.get<ApiResponse<UserPointsWallet>>('/api/v1/points/wallet')
+      const response = await apiClient.get<ApiResponse<UserPointsWallet>>('/v1/points/wallet')
       
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch user wallet')
@@ -74,8 +74,8 @@ export const pointsApi = {
    */
   getTransactionHistory: async (page: number = 0, size: number = 20): Promise<PaginatedResponse<PointsTransaction>> => {
     try {
-      const response = await subscriptionClient.get<ApiResponse<PaginatedResponse<PointsTransaction>>>(
-        `/api/v1/points/transactions?page=${page}&size=${size}`
+      const response = await apiClient.get<ApiResponse<PaginatedResponse<PointsTransaction>>>(
+        `/v1/points/transactions?page=${page}&size=${size}`
       )
       
       if (!response.data.success) {
@@ -96,7 +96,7 @@ export const pointsApi = {
    */
   redeemPoints: async (redeemData: RedeemPointsRequest): Promise<string> => {
     try {
-      const response = await subscriptionClient.post<ApiResponse<string>>('/api/v1/points/redeem', redeemData)
+      const response = await apiClient.post<ApiResponse<string>>('/v1/points/redeem', redeemData)
       
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to redeem points')

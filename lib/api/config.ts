@@ -1,15 +1,9 @@
 import axios from 'axios'
 
-// Microservice configurations
-const MICROSERVICES = {
-  AUTH: process.env.NEXT_PUBLIC_AUTH_API_URL || 'https://auth-api.edunex.app/api',
-  SUBSCRIPTION: process.env.NEXT_PUBLIC_SUBSCRIPTION_API_URL || 'http://localhost:8083',
-  // Add more microservices here as needed
-  // COURSE: process.env.NEXT_PUBLIC_COURSE_API_URL || 'http://localhost:8084',
-  // NOTIFICATION: process.env.NEXT_PUBLIC_NOTIFICATION_API_URL || 'http://localhost:8085',
-}
+// API Gateway configuration
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8090/api'
 
-const API_BASE_URL = MICROSERVICES.AUTH
+const API_BASE_URL = API_GATEWAY_URL
 
 // Type for auth state
 interface AuthState {
@@ -30,119 +24,9 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 seconds timeout
+  timeout: 30000, // 10 seconds timeout
   withCredentials: true, // Include cookies in requests
 })
-
-// Function to create API client for specific microservice
-export const createMicroserviceClient = (serviceUrl: string, options: {
-  withAuth?: boolean
-  timeout?: number
-} = {}) => {
-  const { withAuth = true, timeout = 10000 } = options
-  
-  const client = axios.create({
-    baseURL: serviceUrl,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    timeout,
-    withCredentials: withAuth, // Include cookies only if auth is needed
-  })
-
-  // Add auth interceptors only if withAuth is true
-  if (withAuth) {
-    // Request interceptor to add auth token
-    client.interceptors.request.use(
-      (config) => {
-        if (getAuthState) {
-          const authState = getAuthState()
-          if (authState.accessToken) {
-            config.headers.Authorization = `${authState.tokenType || 'Bearer'} ${authState.accessToken}`
-          }
-        }
-        return config
-      },
-      (error) => {
-        return Promise.reject(error)
-      }
-    )
-
-    // Response interceptor for error handling (same as main client)
-    client.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        const originalRequest = error.config
-
-        // Handle 401 Unauthorized errors
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          
-          if (isRefreshing) {
-            return new Promise((resolve, reject) => {
-              failedQueue.push({ resolve, reject })
-            }).then(token => {
-              originalRequest.headers.Authorization = `Bearer ${token}`
-              return client(originalRequest)
-            }).catch(err => {
-              return Promise.reject(err)
-            })
-          }
-
-          originalRequest._retry = true
-          isRefreshing = true
-          
-          if (getAuthState) {
-            const authState = getAuthState()
-            
-            try {
-              const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include'
-              })
-              
-              if (!response.ok) {
-                throw new Error('Token refresh failed')
-              }
-              
-              const newAuthData = await response.json()
-              
-              authState.updateTokens({
-                accessToken: newAuthData.accessToken,
-                tokenType: newAuthData.tokenType,
-                expiresIn: newAuthData.expiresIn,
-                user: newAuthData.user
-              })
-
-              processQueue(null, newAuthData.accessToken)
-              originalRequest.headers.Authorization = `${newAuthData.tokenType || 'Bearer'} ${newAuthData.accessToken}`
-              
-              return client(originalRequest)
-              
-            } catch (refreshError) {
-              console.error('Token refresh failed:', refreshError)
-              processQueue(refreshError, null)
-              authState.logout()
-              window.location.href = '/auth/login'
-            } finally {
-              isRefreshing = false
-            }
-          } else {
-            isRefreshing = false
-            window.location.href = '/auth/login'
-          }
-        }
-
-        return Promise.reject(error)
-      }
-    )
-  }
-
-  return client
-}
-
-// Create subscription service client
-export const subscriptionClient = createMicroserviceClient(MICROSERVICES.SUBSCRIPTION)
 
 // Store for auth state access (will be set by AuthProvider)
 let getAuthState: (() => AuthState) | null = null
@@ -287,6 +171,3 @@ apiClient.interceptors.response.use(
 )
 
 export default apiClient
-
-// Export microservices configuration
-export { MICROSERVICES }

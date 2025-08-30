@@ -10,40 +10,9 @@ import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
-import { getPaymentApiUrl } from "@/lib/api/endpoints"
+import { paymentApi, type PaymentMethod } from "@/lib/api/payment"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '')
-
-interface PaymentMethod {
-  id: string
-  type: string
-  brand: string
-  last4: string
-  expMonth: number
-  expYear: number
-  isDefault: boolean
-  billingName: string
-  country: string
-}
-
-interface PaymentMethodsResponse {
-  success: boolean
-  message: string
-  data: {
-    paymentMethods: PaymentMethod[]
-    defaultPaymentMethodId: string | null
-  }
-}
-
-interface SetupIntentResponse {
-  success: boolean
-  message: string
-  data: {
-    clientSecret: string
-    setupIntentId: string
-    customerId: string
-  }
-}
 
 const PaymentMethods = () => {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
@@ -60,31 +29,16 @@ const PaymentMethods = () => {
       setLoading(true)
       setError(null)
       
-      const response = await fetch(getPaymentApiUrl('api/v1/payments/payment-methods'), {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      
-      const data: PaymentMethodsResponse = await response.json()
-      
-      if (data.success) {
-        setPaymentMethods(data.data.paymentMethods)
-        setDefaultPaymentMethodId(data.data.defaultPaymentMethodId)
-      } else {
-        throw new Error(data.message || 'Failed to fetch payment methods')
-      }
+      const data = await paymentApi.getPaymentMethods()
+      setPaymentMethods(data.paymentMethods)
+      setDefaultPaymentMethodId(data.defaultPaymentMethodId)
     } catch (error) {
       console.error('Failed to fetch payment methods:', error)
-      setError('Failed to load payment methods. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load payment methods. Please try again.'
+      setError(errorMessage)
       toast({
         title: "Error",
-        description: "Failed to load payment methods. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
@@ -96,30 +50,19 @@ const PaymentMethods = () => {
     try {
       setActionLoading(`remove-${paymentMethodId}`)
       
-      const response = await fetch(getPaymentApiUrl(`api/v1/payments/payment-methods/${paymentMethodId}`), {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        }
+      await paymentApi.removePaymentMethod(paymentMethodId)
+      
+      toast({
+        title: "Success",
+        description: "Payment method removed successfully.",
       })
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        toast({
-          title: "Success",
-          description: "Payment method removed successfully.",
-        })
-        fetchPaymentMethods()
-      } else {
-        throw new Error(data.message || 'Failed to remove payment method')
-      }
+      fetchPaymentMethods()
     } catch (error) {
       console.error('Failed to remove payment method:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to remove payment method. Please try again.'
       toast({
         title: "Error",
-        description: "Failed to remove payment method. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
@@ -131,30 +74,19 @@ const PaymentMethods = () => {
     try {
       setActionLoading(`default-${paymentMethodId}`)
       
-      const response = await fetch(getPaymentApiUrl(`api/v1/payments/payment-methods/${paymentMethodId}/default`), {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        }
+      await paymentApi.setDefaultPaymentMethod(paymentMethodId)
+      
+      toast({
+        title: "Success",
+        description: "Default payment method updated successfully.",
       })
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        toast({
-          title: "Success",
-          description: "Default payment method updated successfully.",
-        })
-        fetchPaymentMethods()
-      } else {
-        throw new Error(data.message || 'Failed to set default payment method')
-      }
+      fetchPaymentMethods()
     } catch (error) {
       console.error('Failed to set default payment method:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to set default payment method. Please try again.'
       toast({
         title: "Error",
-        description: "Failed to set default payment method. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
@@ -427,27 +359,11 @@ const AddPaymentMethodForm = ({
     
     try {
       // Create setup intent
-      const setupResponse = await fetch(getPaymentApiUrl('api/v1/payments/setup-intent'), {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (!setupResponse.ok) {
-        throw new Error(`HTTP error! status: ${setupResponse.status}`)
-      }
-      
-      const setupData: SetupIntentResponse = await setupResponse.json()
-      
-      if (!setupData.success) {
-        throw new Error(setupData.message || 'Failed to create setup intent')
-      }
+      const setupData = await paymentApi.createSetupIntent()
       
       // Confirm setup intent with card
       const { error, setupIntent } = await stripe.confirmCardSetup(
-        setupData.data.clientSecret,
+        setupData.clientSecret,
         {
           payment_method: {
             card: cardElement,
@@ -468,29 +384,16 @@ const AddPaymentMethodForm = ({
       }
       
       // Attach payment method
-      const attachResponse = await fetch(getPaymentApiUrl('api/v1/payments/payment-methods'), {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          paymentMethodId: setupIntent.payment_method,
-          setAsDefault: true
-        })
+      await paymentApi.attachPaymentMethod({
+        paymentMethodId: setupIntent.payment_method as string,
+        setAsDefault: true
       })
       
-      const attachData = await attachResponse.json()
-      
-      if (attachData.success) {
-        toast({
-          title: "Success",
-          description: "Payment method added successfully.",
-        })
-        onSuccess()
-      } else {
-        throw new Error(attachData.message || 'Failed to attach payment method')
-      }
+      toast({
+        title: "Success",
+        description: "Payment method added successfully.",
+      })
+      onSuccess()
       
     } catch (error) {
       console.error('Failed to add payment method:', error)

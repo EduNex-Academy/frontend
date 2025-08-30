@@ -1,5 +1,5 @@
 // Export API configuration
-export { apiClient, subscriptionClient, createMicroserviceClient, MICROSERVICES } from './config'
+export { apiClient } from './config'
 
 // Export all API modules
 export { authApi } from './auth'
