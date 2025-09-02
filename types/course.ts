@@ -73,6 +73,48 @@ export const COURSE_LEVELS = [
   "advanced"
 ] as const
 
+
+export enum ModuleType {
+  VIDEO = "VIDEO",
+  PDF = "PDF",
+  QUIZ = "QUIZ",
+}
+
+
+export interface ModuleDTO {
+  id: string
+  title: string
+  type: ModuleType
+  coinsRequired: number
+  contentUrl: string
+  moduleOrder: number
+  courseId: string
+  courseName: string
+  quizId: string
+  completed: boolean
+  progressPercentage: number
+}
+
+export interface CourseDTO {
+  id: string
+  title: string
+  description: string
+  instructorId: string
+  instructorName?: string
+  category: string
+  createdAt: string
+
+  // Statistics
+  moduleCount: number
+  enrollmentCount: number
+  completionPercentage: number
+
+  // Related data
+  modules: ModuleDTO[]
+  userEnrolled: boolean
+}
+
+
 export type CourseCategory = typeof COURSE_CATEGORIES[number]
 export type LearningPath = typeof LEARNING_PATHS[number]
 export type CourseLevel = typeof COURSE_LEVELS[number]

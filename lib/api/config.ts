@@ -5,7 +5,7 @@ const MICROSERVICES = {
   AUTH: process.env.NEXT_PUBLIC_AUTH_API_URL || 'https://auth-api.edunex.app/api',
   SUBSCRIPTION: process.env.NEXT_PUBLIC_SUBSCRIPTION_API_URL || 'http://localhost:8083',
   // Add more microservices here as needed
-  // COURSE: process.env.NEXT_PUBLIC_COURSE_API_URL || 'http://localhost:8084',
+  COURSE: process.env.NEXT_PUBLIC_COURSE_API_URL || 'http://localhost:8084',
   // NOTIFICATION: process.env.NEXT_PUBLIC_NOTIFICATION_API_URL || 'http://localhost:8085',
 }
 
