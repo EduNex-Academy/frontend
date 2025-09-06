@@ -15,10 +15,10 @@ import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
 
-import { Course } from "@/types/course"
+import { CourseDTO } from "@/types/course"
 
 interface CourseCardProps {
-  course: Course
+  course: CourseDTO
   userRole?: 'STUDENT' | 'INSTRUCTOR'
 }
 
@@ -26,9 +26,9 @@ export function CourseCard({ course, userRole = 'STUDENT' }: CourseCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false)
   
   const levelColors: Record<string, string> = {
-    Beginner: 'bg-green-100 text-green-700 border-green-200',
-    Intermediate: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    Advanced: 'bg-red-100 text-red-700 border-red-200'
+    beginner: 'bg-green-100 text-green-700 border-green-200',
+    intermediate: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    advanced: 'bg-red-100 text-red-700 border-red-200'
   }
 
   const isInstructor = userRole === 'INSTRUCTOR'
@@ -41,7 +41,7 @@ export function CourseCard({ course, userRole = 'STUDENT' }: CourseCardProps) {
       {/* Course Thumbnail */}
       <div className="relative aspect-[4/3] overflow-hidden">
         <Image
-          src={course.thumbnail || "/placeholder.svg"}
+          src={"/placeholder.svg"}
           alt={course.title}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -59,18 +59,9 @@ export function CourseCard({ course, userRole = 'STUDENT' }: CourseCardProps) {
 
         {/* Price badge */}
         <div className="absolute top-2 right-2">
-          {course.price === 0 ? (
-            <Badge className="bg-green-500 hover:bg-green-500 text-xs">Free</Badge>
-          ) : (
-            <Badge className="bg-blue-600 hover:bg-blue-600 text-xs">
-              ${course.price}
-              {course.originalPrice && (
-                <span className="line-through ml-1 text-xs opacity-75">
-                  ${course.originalPrice}
-                </span>
-              )}
-            </Badge>
-          )}
+          <Badge className="bg-blue-600 hover:bg-blue-600 text-xs">
+            {course.moduleCount || 0} modules
+          </Badge>
         </div>
 
         {/* Wishlist button */}
@@ -89,16 +80,16 @@ export function CourseCard({ course, userRole = 'STUDENT' }: CourseCardProps) {
         </div>
 
         {/* Progress bar for enrolled courses */}
-        {course.isEnrolled && course.progress !== undefined && (
+        {course.userEnrolled && course.completionPercentage !== undefined && (
           <div className="absolute bottom-0 left-0 right-0 bg-white/90 p-1.5">
             <div className="flex justify-between items-center text-xs mb-1">
               <span className="font-medium">Progress</span>
-              <span>{course.progress}% complete</span>
+              <span>{course.completionPercentage}% complete</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-1.5">
               <div 
                 className="bg-blue-600 h-1.5 rounded-full transition-all duration-500" 
-                style={{ width: `${course.progress}%` }}
+                style={{ width: `${course.completionPercentage}%` }}
               />
             </div>
           </div>
@@ -124,12 +115,13 @@ export function CourseCard({ course, userRole = 'STUDENT' }: CourseCardProps) {
         {/* Instructor info */}
         <div className="flex items-center space-x-2 mb-2">
           <Avatar className="w-5 h-5">
-            <AvatarImage src={course.instructorAvatar} />
             <AvatarFallback className="text-xs">
-              {course.instructor.split(' ').map(n => n[0]).join('').slice(0, 2)}
+              {course.instructorName ? 
+                course.instructorName.split(' ').map((n: string) => n[0]).join('').slice(0, 2) : 
+                'IN'}
             </AvatarFallback>
           </Avatar>
-          <span className="text-xs text-muted-foreground">{course.instructor}</span>
+          <span className="text-xs text-muted-foreground">{course.instructorName || 'Instructor'}</span>
         </div>
 
         {/* Course stats */}
@@ -137,34 +129,29 @@ export function CourseCard({ course, userRole = 'STUDENT' }: CourseCardProps) {
           <div className="flex items-center space-x-3">
             <div className="flex items-center">
               <Clock className="w-3 h-3 mr-1" />
-              {course.duration}
+              {course.moduleCount || 0} modules
             </div>
             <div className="flex items-center">
               <Users className="w-3 h-3 mr-1" />
-              {course.studentsEnrolled.toLocaleString()}
+              {course.enrollmentCount?.toLocaleString() || 0} students
             </div>
           </div>
           
           <div className="flex items-center">
             <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
-            <span className="font-medium">{course.rating}</span>
-            <span className="ml-1">(1.2k)</span>
+            <span className="font-medium">4.5</span>
+            <span className="ml-1">({course.enrollmentCount || 0})</span>
           </div>
         </div>
 
-        {/* Tags and Level */}
+        {/* Tags */}
         <div className="flex flex-wrap gap-1 mb-2">
-          <Badge variant="outline" className={`${levelColors[course.level]} text-xs px-1.5 py-0.5`}>
-            {course.level}
-          </Badge>
           <Badge variant="outline" className="text-xs px-1.5 py-0.5">
             {course.category}
           </Badge>
-          {course.learningPath && (
-            <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200 px-1.5 py-0.5">
-              {course.learningPath}
-            </Badge>
-          )}
+          <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+            Created: {new Date(course.createdAt).toLocaleDateString()}
+          </Badge>
         </div>
       </CardContent>
     </Card>
