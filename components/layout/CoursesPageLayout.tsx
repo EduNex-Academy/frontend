@@ -20,7 +20,7 @@ import { CourseCard } from "@/components/common/CourseCard"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CourseDTO, COURSE_CATEGORIES, COURSE_LEVELS, LEARNING_PATHS } from "@/types/course"
-import { courseApi } from "@/lib/api/cource"
+import { courseApi } from "@/lib/api/course"
 import { useToast } from "@/hooks/use-toast"
 
 const levels = [

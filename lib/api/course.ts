@@ -1,6 +1,5 @@
 import { CourseDTO } from "@/types"
 import { apiClient } from './config'
-import { ApiResponse } from "./points"
 
 
 
