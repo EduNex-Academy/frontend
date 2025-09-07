@@ -105,6 +105,41 @@ export interface ModuleDTO {
   progressPercentage: number
 }
 
+export interface QuizAnswerDTO {
+  id: number
+  answerText: string
+  isCorrect: boolean
+  questionId: number
+}
+
+export interface QuizDTO {
+  id: number
+  title: string
+  moduleId: number
+  moduleTitle: string
+  questions: QuizQuestionDTO[]
+}
+
+export interface QuizQuestionDTO {
+  id: number
+  questionText: string
+  quizId: number
+  answers: QuizAnswerDTO[]
+}
+
+export interface QuizResultDTO {
+  id: number
+  userId: string
+  quizId: number
+  quizTitle: string
+  score: number
+  submittedAt: string
+
+  moduleTitle: string
+  courseId: number
+  courseTitle: string
+}
+
 export type CourseCategory = typeof COURSE_CATEGORIES[number]
 export type LearningPath = typeof LEARNING_PATHS[number]
 export type CourseLevel = typeof COURSE_LEVELS[number]
