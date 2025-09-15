@@ -25,13 +25,26 @@ export default function MyCoursesPage() {
 
 
     // Filter enrolled courses (mock data - replace with API call)
-    const enrolledCourses = mockCourses.filter(course => course.isEnrolled).map(course => ({
-        ...course,
-        progress: course.progress || Math.floor(Math.random() * 100),
-        lastAccessed: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-        nextDeadline: new Date(Date.now() + Math.random() * 14 * 24 * 60 * 60 * 1000).toISOString(),
-        status: course.progress === 100 ? 'completed' : course.progress! > 80 ? 'almost-complete' : course.progress! > 0 ? 'in-progress' : 'not-started'
-    }))
+    const enrolledCourses = mockCourses.filter(course => course.isEnrolled).map(course => {
+        const progress = course.progress || Math.floor(Math.random() * 100)
+        return {
+            id: parseInt(course.id), // Convert string to number for CourseDTO
+            title: course.title,
+            description: course.description,
+            instructorId: `instructor-${course.id}`, // Generate instructorId
+            instructorName: course.instructor, // Map instructor name
+            category: course.category,
+            createdAt: course.createdAt || new Date().toISOString(),
+            moduleCount: course.lessons, // Map lessons to moduleCount
+            enrollmentCount: course.studentsEnrolled,
+            completionPercentage: progress,
+            userEnrolled: true, // Since these are enrolled courses
+            progress,
+            lastAccessed: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+            nextDeadline: new Date(Date.now() + Math.random() * 14 * 24 * 60 * 60 * 1000).toISOString(),
+            status: progress === 100 ? 'completed' : progress > 80 ? 'almost-complete' : progress > 0 ? 'in-progress' : 'not-started'
+        }
+    })
 
     const filteredCourses = useMemo(() => {
         let filtered = enrolledCourses
@@ -41,7 +54,7 @@ export default function MyCoursesPage() {
             filtered = filtered.filter(course =>
                 course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 course.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                course.instructor.toLowerCase().includes(searchQuery.toLowerCase())
+                (course.instructorName && course.instructorName.toLowerCase().includes(searchQuery.toLowerCase()))
             )
         }
 
@@ -143,9 +156,9 @@ export default function MyCoursesPage() {
                                 <div className="bg-white/90 backdrop-blur-sm rounded-lg p-2 border border-blue-200/30">
                                     <div className="flex justify-between items-center text-xs mb-1">
                                         <span className="font-medium">Progress</span>
-                                        <span>{course.progress}%</span>
+                                        <span>{course.completionPercentage}%</span>
                                     </div>
-                                    <Progress value={course.progress} className="h-1.5" />
+                                    <Progress value={course.completionPercentage} className="h-1.5" />
                                     <div className="flex justify-between items-center mt-1">
                                         <Badge
                                             variant="secondary"
