@@ -15,6 +15,8 @@ import { VideoModuleForm } from './VideoModuleForm'
 import { PDFModuleForm } from './PDFModuleForm'
 import { QuizModuleForm } from './QuizModuleForm'
 import { ModulesList } from './ModulesList'
+import { ContentViewer } from './ContentViewer'
+import { CloudIcon, AlertTriangle } from 'lucide-react'
 
 interface ModuleCreationProps {
   courseId: number
@@ -24,6 +26,8 @@ export const ModuleCreation: React.FC<ModuleCreationProps> = ({ courseId }) => {
   const [course, setCourse] = useState<CourseDTO | null>(null)
   const [modules, setModules] = useState<ModuleDTO[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedModule, setSelectedModule] = useState<ModuleDTO | null>(null)
+  const [isViewerOpen, setIsViewerOpen] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -69,7 +73,14 @@ export const ModuleCreation: React.FC<ModuleCreationProps> = ({ courseId }) => {
   }
 
   const handleModuleAdded = (newModule: ModuleDTO) => {
+    // Add the new module to the list and refresh modules to get CloudFront URLs if available
     setModules(prev => [...prev, newModule])
+    refreshModules()
+  }
+  
+  const handleViewModule = (module: ModuleDTO) => {
+    setSelectedModule(module)
+    setIsViewerOpen(true)
   }
 
   if (isLoading) {
@@ -96,6 +107,47 @@ export const ModuleCreation: React.FC<ModuleCreationProps> = ({ courseId }) => {
         </CardHeader>
         <CardContent>
           <ModulesList modules={modules} refreshModules={refreshModules} />
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Upload Instructions</CardTitle>
+          <CardDescription>
+            Learn how to add different types of content to your course.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="border rounded-lg p-4">
+                <h3 className="font-medium mb-2">Video Modules</h3>
+                <ul className="text-sm space-y-2">
+                  <li>• Upload MP4, WebM, or MOV files (max 100MB)</li>
+                  <li>• Videos are securely stored and delivered via CloudFront</li>
+                  <li>• You can also provide a URL to external videos</li>
+                </ul>
+              </div>
+              
+              <div className="border rounded-lg p-4">
+                <h3 className="font-medium mb-2">PDF Modules</h3>
+                <ul className="text-sm space-y-2">
+                  <li>• Upload PDF documents (max 50MB)</li>
+                  <li>• Files are securely stored and delivered via CloudFront</li>
+                  <li>• You can also provide a URL to external PDFs</li>
+                </ul>
+              </div>
+              
+              <div className="border rounded-lg p-4">
+                <h3 className="font-medium mb-2">Quiz Modules</h3>
+                <ul className="text-sm space-y-2">
+                  <li>• Create interactive quizzes with multiple-choice questions</li>
+                  <li>• Set correct answers and feedback</li>
+                  <li>• Track student progress and scores</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

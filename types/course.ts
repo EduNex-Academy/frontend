@@ -97,6 +97,7 @@ export interface ModuleDTO {
   type: ModuleType
   coinsRequired: number
   contentUrl: string
+  contentCloudFrontUrl?: string  // CloudFront URL for content
   moduleOrder: number
   courseId: number
   courseName: string
@@ -138,6 +139,16 @@ export interface QuizResultDTO {
   moduleTitle: string
   courseId: number
   courseTitle: string
+}
+
+export interface FileDTO {
+  moduleId: number
+  fileName: string
+  contentType: string
+  objectKey: string
+  url?: string  // CloudFront URL
+  size: number
+  fileType: 'VIDEO' | 'PDF' | 'OTHER'
 }
 
 export type CourseCategory = typeof COURSE_CATEGORIES[number]
