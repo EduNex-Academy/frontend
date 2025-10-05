@@ -16,7 +16,8 @@ import { PDFModuleForm } from './PDFModuleForm'
 import { QuizModuleForm } from './QuizModuleForm'
 import { ModulesList } from './ModulesList'
 import { ContentViewer } from './ContentViewer'
-import { CloudIcon, AlertTriangle } from 'lucide-react'
+import { CloudIcon, AlertTriangle, ImageIcon } from 'lucide-react'
+import { CourseThumbnail } from './CourseThumbnail'
 
 interface ModuleCreationProps {
   courseId: number
@@ -93,9 +94,22 @@ export const ModuleCreation: React.FC<ModuleCreationProps> = ({ courseId }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-2xl font-bold">{course.title}</h1>
-        <p className="text-muted-foreground">{course.description}</p>
+      <div className="flex items-start gap-6">
+        {course.thumbnailUrl && (
+          <div className="flex-shrink-0">
+            <CourseThumbnail course={course} size="medium" />
+          </div>
+        )}
+        <div className="flex-grow space-y-2">
+          <h1 className="text-2xl font-bold">{course.title}</h1>
+          <p className="text-muted-foreground">{course.description}</p>
+          {course.thumbnailUrl && (
+            <div className="flex items-center text-xs text-green-600">
+              <CloudIcon className="h-3 w-3 mr-1" />
+              <span>Thumbnail hosted on CloudFront</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <Card>

@@ -17,6 +17,8 @@ import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/use-auth'
 import { courseApi } from '@/lib/api'
 import { COURSE_CATEGORIES } from '@/types'
+import { ImageUpload } from '@/components/ui/image-upload'
+import { Separator } from '@/components/ui/separator'
 
 interface CourseFormData {
   title: string
@@ -31,6 +33,16 @@ export const CreateCourseForm = () => {
     description: '',
     category: '',
   })
+  const [thumbnailState, setThumbnailState] = useState<{
+    file: File | null
+    preview: string | null
+    progress: number
+  }>({
+    file: null,
+    preview: null,
+    progress: 0
+  })
+  const [thumbnailError, setThumbnailError] = useState<string | null>(null)
   
   const router = useRouter()
   const { toast } = useToast()
@@ -43,6 +55,15 @@ export const CreateCourseForm = () => {
   
   const handleSelectChange = (value: string, name: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+  
+  const handleThumbnailChange = (file: File | null) => {
+    setThumbnailError(null)
+    
+    if (file && !file.type.startsWith('image/')) {
+      setThumbnailError('Please upload a valid image file.')
+      return
+    }
   }
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,6 +96,27 @@ export const CreateCourseForm = () => {
       }
       
       const createdCourse = await courseApi.createCourse(courseData)
+      
+      // If a thumbnail was uploaded, upload it to the course
+      if (thumbnailState.file) {
+        setThumbnailState(prev => ({ ...prev, progress: 10 }))
+        
+        try {
+          // Upload the thumbnail
+          const courseWithThumbnail = await courseApi.uploadCourseThumbnail(createdCourse.id, thumbnailState.file)
+          setThumbnailState(prev => ({ ...prev, progress: 100 }))
+          
+          // Update the created course with the thumbnail URL
+          createdCourse.thumbnailUrl = courseWithThumbnail.thumbnailUrl
+        } catch (thumbnailError: any) {
+          console.error('Thumbnail upload failed:', thumbnailError)
+          toast({
+            title: 'Thumbnail upload failed',
+            description: 'Course was created but thumbnail upload failed. You can upload the thumbnail later.',
+            variant: 'destructive',
+          })
+        }
+      }
       
       toast({
         title: 'Course created!',
@@ -144,6 +186,24 @@ export const CreateCourseForm = () => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          
+          <Separator className="my-4" />
+          
+          <div className="space-y-2">
+            <ImageUpload
+              id="thumbnail"
+              label="Course Thumbnail (Optional)"
+              accept="image/*"
+              maxSize={10} // 10MB max for thumbnails
+              onChange={handleThumbnailChange}
+              error={thumbnailError || undefined}
+              imageState={thumbnailState}
+              setImageState={setThumbnailState}
+            />
+            <p className="text-xs text-muted-foreground">
+              Recommended: 16:9 ratio, minimum 1280x720px for best display (max 10MB)
+            </p>
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">

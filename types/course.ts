@@ -83,6 +83,7 @@ export interface CourseDTO {
   instructorName?: string // Optional - for display purposes
   category: string
   createdAt: string // ISO date string
+  thumbnailUrl?: string // URL to the course thumbnail image
   moduleCount?: number
   enrollmentCount?: number
   completionPercentage?: number // For the current user if specified
