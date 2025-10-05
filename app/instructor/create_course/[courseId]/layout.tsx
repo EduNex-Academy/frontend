@@ -41,10 +41,8 @@ export default function CourseEditLayout({
         </div>
       </div>
       
-      <div className="flex space-x-4">
-        <div className="w-full">
-          {children}
-        </div>
+      <div className="flex-1">
+        {children}
       </div>
     </div>
   )

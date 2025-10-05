@@ -40,12 +40,20 @@ export function CourseCard({ course, userRole = 'STUDENT' }: CourseCardProps) {
     <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-0 shadow-sm bg-white overflow-hidden max-w-sm">
       {/* Course Thumbnail */}
       <div className="relative aspect-[4/3] overflow-hidden">
-        <Image
-          src={"/placeholder.svg"}
-          alt={course.title}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+        {course.thumbnailUrl ? (
+          <img
+            src={course.thumbnailUrl}
+            alt={course.title}
+            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <Image
+            src="/placeholder.svg"
+            alt={course.title}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        )}
         
         {/* Overlay with action buttons */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
