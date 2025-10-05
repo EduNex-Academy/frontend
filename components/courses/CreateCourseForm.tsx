@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/use-auth'
 import { courseApi } from '@/lib/api'
-import { COURSE_CATEGORIES } from '@/types'
+import { COURSE_CATEGORIES, CourseStatus } from '@/types'
 import { ImageUpload } from '@/components/ui/image-upload'
 import { Separator } from '@/components/ui/separator'
 
@@ -92,7 +92,8 @@ export const CreateCourseForm = () => {
     try {
       const courseData = {
         ...formData,
-        instructorId: user.id
+        instructorId: user.id,
+        status: 'DRAFT' as CourseStatus // Set course status to DRAFT by default
       }
       
       const createdCourse = await courseApi.createCourse(courseData)

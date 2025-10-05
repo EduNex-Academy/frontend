@@ -10,6 +10,8 @@ import Link from 'next/link'
 
 export default function MyCoursesPage() {
   const [courses, setCourses] = useState<CourseDTO[]>([])
+  const [filteredCourses, setFilteredCourses] = useState<CourseDTO[]>([])
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
@@ -23,6 +25,7 @@ export default function MyCoursesPage() {
         setError(null)
         const fetchedCourses = await courseApi.getCoursesByInstructorId(user.id)
         setCourses(fetchedCourses)
+        setFilteredCourses(fetchedCourses)
       } catch (err: any) {
         console.error('Failed to fetch instructor courses:', err)
         setError(err.message || 'Failed to fetch your courses')
@@ -33,6 +36,17 @@ export default function MyCoursesPage() {
 
     fetchInstructorCourses()
   }, [user?.id])
+  
+  // Filter courses based on status
+  useEffect(() => {
+    if (statusFilter === 'all') {
+      setFilteredCourses(courses)
+    } else if (statusFilter === 'draft') {
+      setFilteredCourses(courses.filter(course => course.status !== 'PUBLISHED'))
+    } else {
+      setFilteredCourses(courses.filter(course => course.status === 'PUBLISHED'))
+    }
+  }, [statusFilter, courses])
 
   if (loading) {
     return (
@@ -67,6 +81,33 @@ export default function MyCoursesPage() {
           </Link>
         </Button>
       </div>
+      
+      <div className="flex items-center gap-4 mb-6">
+        <p className="text-sm font-medium">Filter by status:</p>
+        <div className="flex gap-2">
+          <Button
+            variant={statusFilter === 'all' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setStatusFilter('all')}
+          >
+            All
+          </Button>
+          <Button
+            variant={statusFilter === 'draft' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setStatusFilter('draft')}
+          >
+            Drafts
+          </Button>
+          <Button
+            variant={statusFilter === 'published' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setStatusFilter('published')}
+          >
+            Published
+          </Button>
+        </div>
+      </div>
 
       {courses.length === 0 ? (
         <div className="text-center py-20 bg-muted/30 rounded-lg">
@@ -78,9 +119,19 @@ export default function MyCoursesPage() {
             </Link>
           </Button>
         </div>
+      ) : filteredCourses.length === 0 ? (
+        <div className="text-center py-10 bg-muted/30 rounded-lg">
+          <h3 className="text-xl font-medium mb-2">No courses found</h3>
+          <p className="text-muted-foreground mb-6">
+            No courses match the selected filter. Try changing your filter or create a new course.
+          </p>
+          <Button variant="outline" onClick={() => setStatusFilter('all')}>
+            Clear Filter
+          </Button>
+        </div>
       ) : (
         <div className="flex flex-col space-y-4">
-          {courses.map((course) => (
+          {filteredCourses.map((course) => (
             <div key={course.id} className="border rounded-lg overflow-hidden bg-card transition-all hover:shadow-md">
               <div className="flex flex-col sm:flex-row">
                 <div className="relative sm:w-48 h-40 sm:h-auto">
@@ -104,9 +155,11 @@ export default function MyCoursesPage() {
                     <div className="flex justify-between items-start">
                       <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
                       <div className={`px-2 py-1 rounded text-xs ${
-                        course.modules && course.modules.length > 0 ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'
+                        course.status === 'PUBLISHED' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-amber-100 text-amber-800'
                       }`}>
-                        {course.modules && course.modules.length > 0 ? 'In Progress' : 'Draft'}
+                        {course.status === 'PUBLISHED' ? 'Published' : 'Draft'}
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground mb-4">{course.description || 'No description provided'}</p>
