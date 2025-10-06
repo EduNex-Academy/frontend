@@ -17,12 +17,20 @@ import {
 import { useAuth } from "@/hooks/use-auth"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState, KeyboardEvent } from "react"
+import { useState, useEffect, KeyboardEvent } from "react"
+
+import SockJS from "sockjs-client" 
+import { Client } from "@stomp/stompjs"
+
+
 
 export function DashboardHeader() {
   const { user } = useAuth()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+
+  const [notifications, setNotifications] = useState<any[]>([]) 
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
@@ -40,6 +48,35 @@ export function DashboardHeader() {
   const handleSearchSubmit = () => {
     handleSearch(searchQuery)
   }
+
+  useEffect(() => { 
+    if (!user) return 
+    
+    const socket = new SockJS("http://localhost:8080/ws") // your backend WebSocket endpoint 
+    const client = new Client({ 
+      webSocketFactory: () => socket as any, 
+      debug: (str) => console.log(str), 
+      onConnect: () => { 
+        console.log("Connected to WebSocket") 
+        
+      // Subscribe to personal notification topic 
+      client.subscribe(`/topic/notifications/${user.id}`, (message) => {
+         if (message.body) { 
+            const notification = JSON.parse(message.body) 
+            setNotifications((prev) => [notification, ...prev]) 
+            setUnreadCount((prev) => prev + 1) 
+          }
+        }) 
+      }, 
+      onStompError: (frame) => { 
+        console.error("Broker reported error: " + frame.headers["message"])
+       }, 
+      }) 
+      client.activate() 
+      return () => { 
+        client.deactivate() 
+       }
+      }, [user])
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-blue-200/20 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
@@ -86,26 +123,29 @@ export function DashboardHeader() {
             <DropdownMenuContent align="end" className="w-80 bg-background/95 backdrop-blur-md border-border/40">
               <DropdownMenuLabel className="font-semibold text-base">Notifications</DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-border/60" />
-              <DropdownMenuItem className="flex flex-col items-start space-y-1 p-4 hover:bg-muted/60 transition-colors">
-                <div className="font-medium text-sm">Assignment Due Tomorrow</div>
-                <div className="text-xs text-muted-foreground">CS101 - Data Structures Project</div>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex flex-col items-start space-y-1 p-4 hover:bg-muted/60 transition-colors">
-                <div className="font-medium text-sm">New Course Available</div>
-                <div className="text-xs text-muted-foreground">Advanced React Development</div>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex flex-col items-start space-y-1 p-4 hover:bg-muted/60 transition-colors">
-                <div className="font-medium text-sm">Grade Posted</div>
-                <div className="text-xs text-muted-foreground">Mathematics Midterm - Grade: A</div>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-border/60" />
-              <DropdownMenuItem className="text-center p-3 hover:bg-muted/60 transition-colors">
-                <Link href="/student/notifications" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                  View All Notifications
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              
+              {/* ✅ Render notifications dynamically */} 
+              {notifications.length > 0 ? ( 
+                notifications.map((n, index) => ( 
+                <DropdownMenuItem key={index} className="flex flex-col items-start space-y-1 p-4 hover:bg-muted/60 transition-colors"> 
+                <div className="font-medium text-sm">{n.title || "New Notification"}</div>
+                 <div className="text-xs text-muted-foreground">{n.message || ""}</div> 
+                 </DropdownMenuItem> 
+                 )) 
+                ) : ( 
+                <DropdownMenuItem className="p-4 text-sm text-muted-foreground">
+                   No new notifications 
+                   </DropdownMenuItem> 
+                )} 
+                
+                 <DropdownMenuSeparator className="bg-border/60" /> 
+                  <DropdownMenuItem className="text-center p-3 hover:bg-muted/60 transition-colors"> 
+                   <Link href="/student/notifications" className="text-sm text-blue-600 hover:text-blue-700 font-medium"> 
+                  View All Notifications 
+                   </Link> 
+                  </DropdownMenuItem> 
+                 </DropdownMenuContent> 
+                </DropdownMenu>
 
           {/* User Avatar with Status Indicator */}
           <div className="flex items-center ml-3">
