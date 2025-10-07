@@ -11,6 +11,7 @@ export default function CreateCoursePage() {
           Fill out the form below to create a new course. After creating the course, you'll be able to add modules.
         </p>
       </div>
+      
       <CreateCourseForm />
     </div>
   )
