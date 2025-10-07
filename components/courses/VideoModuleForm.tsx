@@ -180,7 +180,7 @@ export const VideoModuleForm: React.FC<VideoModuleFormProps> = ({
                 id="video-upload"
                 label="Upload Video File*"
                 accept="video/*"
-                maxSize={100} // 100MB max
+                maxSize={1000} // 1000MB (1GB) max
                 onChange={handleFileChange}
                 error={fileError || undefined}
                 fileState={fileState}
@@ -192,7 +192,7 @@ export const VideoModuleForm: React.FC<VideoModuleFormProps> = ({
                 <AlertCircle className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="font-medium">Supported formats:</p>
-                  <p className="text-muted-foreground">MP4, WebM, MOV (max 100MB)</p>
+                  <p className="text-muted-foreground">MP4, WebM, MOV (max 1GB)</p>
                 </div>
               </div>
             </TabsContent>

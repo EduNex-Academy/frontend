@@ -208,12 +208,20 @@ export function CourseDetailsLayout({ course, userRole }: CourseDetailsLayoutPro
             {/* Course Hero */}
             <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-200/30 overflow-hidden mb-8">
               <div className="relative aspect-video">
-                <Image
-                  src={course.thumbnail || "/placeholder.svg"}
-                  alt={course.title}
-                  fill
-                  className="object-cover"
-                />
+                {course.thumbnail ? (
+                  <img
+                    src={course.thumbnail}
+                    alt={course.title}
+                    className="object-cover w-full h-full absolute inset-0"
+                  />
+                ) : (
+                  <Image
+                    src="/placeholder.svg"
+                    alt={course.title}
+                    fill
+                    className="object-cover"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-6 left-6 right-6">
                   <div className="flex flex-wrap gap-2 mb-4">
@@ -449,12 +457,12 @@ function RecommendationsSection({ recommendations }: { recommendations: any[] })
       <div className="grid gap-4">
         {recommendations.map((course) => (
           <div key={course.id} className="flex gap-4 p-4 bg-gradient-to-r from-blue-50/30 to-purple-50/20 rounded-xl border border-blue-100/50 hover:shadow-md transition-shadow">
-            <Image
-              src={course.thumbnail}
+            <img
+              src={course.thumbnail || "/placeholder.svg"}
               alt={course.title}
               width={80}
               height={60}
-              className="rounded-lg object-cover"
+              className="rounded-lg object-cover w-[80px] h-[60px]"
             />
             <div className="flex-1">
               <h4 className="font-semibold text-gray-900 mb-1">{course.title}</h4>

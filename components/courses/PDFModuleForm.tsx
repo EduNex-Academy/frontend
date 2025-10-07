@@ -180,7 +180,7 @@ export const PDFModuleForm: React.FC<PDFModuleFormProps> = ({
                 id="pdf-upload"
                 label="Upload PDF File*"
                 accept="application/pdf"
-                maxSize={50} // 50MB max for PDFs
+                maxSize={100} // 100MB max for PDFs
                 onChange={handleFileChange}
                 error={fileError || undefined}
                 fileState={fileState}
@@ -192,7 +192,7 @@ export const PDFModuleForm: React.FC<PDFModuleFormProps> = ({
                 <AlertCircle className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="font-medium">File requirements:</p>
-                  <p className="text-muted-foreground">PDF format only (max 50MB)</p>
+                  <p className="text-muted-foreground">PDF format only (max 100MB)</p>
                 </div>
               </div>
             </TabsContent>

@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { authApi } from "@/lib/api/auth"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { InstructorCoursesNav } from "./InstructorCoursesNav"
 
 const studentNavigation = [
   { name: "Dashboard", href: "/student/dashboard", icon: Home },
@@ -32,7 +33,7 @@ const studentNavigation = [
 const instructorNavigation = [
   { name: "Dashboard", href: "/instructor/dashboard", icon: Home },
   { name: "All Courses", href: "/instructor/courses", icon: BookOpen },
-  { name: "Create Course", href: "/instructor/create_course", icon: Plus },
+  { name: "My Courses", href: "/instructor/my-courses", icon: BookOpen }, // This will be replaced by our custom component
   { name: "Students", href: "/instructor/students", icon: Users },
   { name: "Assignments", href: "/instructor/assignments", icon: FileText },
   { name: "Quizzes", href: "/instructor/quizzes", icon: GraduationCap },
@@ -70,6 +71,12 @@ export function AppSidebar() {
       <div className="flex flex-1 flex-col items-center justify-center space-y-1 py-4">
         {navigation.map((item) => {
           const isActive = pathname === item.href
+          
+          // Replace "My Courses" with our custom component for instructors
+          if (item.name === "My Courses" && user?.role === "INSTRUCTOR") {
+            return <InstructorCoursesNav key={item.name} />;
+          }
+          
           return (
             <Link
               key={item.name}

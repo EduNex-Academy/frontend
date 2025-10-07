@@ -75,6 +75,8 @@ export const COURSE_LEVELS = [
 
 export type ModuleType = 'VIDEO' | 'PDF' | 'QUIZ'
 
+export type CourseStatus = 'DRAFT' | 'PUBLISHED'
+
 export interface CourseDTO {
   id: number
   title: string
@@ -83,11 +85,13 @@ export interface CourseDTO {
   instructorName?: string // Optional - for display purposes
   category: string
   createdAt: string // ISO date string
+  thumbnailUrl?: string // URL to the course thumbnail image
   moduleCount?: number
   enrollmentCount?: number
   completionPercentage?: number // For the current user if specified
   modules?: ModuleDTO[]
   userEnrolled?: boolean
+  status?: CourseStatus // Course publication status - DRAFT or PUBLISHED
 }
 
 

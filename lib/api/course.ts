@@ -103,6 +103,36 @@ export const courseApi = {
   },
 
   /**
+   * Upload thumbnail image for a course
+   */
+  uploadCourseThumbnail: async (id: number, file: File): Promise<CourseDTO> => {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const response = await apiClient.post<CourseDTO>(
+        `/courses/${id}/thumbnail`, 
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      )
+      
+      if (response.status !== 200) {
+        throw new Error('Failed to upload course thumbnail')
+      }
+      
+      return response.data
+    } catch (error: any) {
+      console.error(`Failed to upload thumbnail for course with ID ${id}:`, error)
+      const message = error.response?.data?.message || error.message || 'Failed to upload course thumbnail'
+      throw new Error(message)
+    }
+  },
+
+  /**
    * Get courses by instructor ID
    */
   getCoursesByInstructorId: async (instructorId: string): Promise<CourseDTO[]> => {
@@ -117,6 +147,25 @@ export const courseApi = {
     } catch (error: any) {
       console.error('Failed to fetch instructor courses:', error)
       const message = error.response?.data?.message || error.message || 'Failed to fetch instructor courses'
+      throw new Error(message)
+    }
+  },
+
+  /**
+   * Publish a course (change status from DRAFT to PUBLISHED)
+   */
+  publishCourse: async (id: number): Promise<CourseDTO> => {
+    try {
+      const response = await apiClient.post<CourseDTO>(`/courses/${id}/publish`)
+      
+      if (response.status !== 200) {
+        throw new Error('Failed to publish course')
+      }
+      
+      return response.data
+    } catch (error: any) {
+      console.error(`Failed to publish course with ID ${id}:`, error)
+      const message = error.response?.data?.message || error.message || 'Failed to publish course'
       throw new Error(message)
     }
   }

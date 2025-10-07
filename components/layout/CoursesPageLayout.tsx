@@ -142,6 +142,12 @@ export function CoursesPageLayout({ userRole, initialQuery = '' }: CoursesPageLa
     // Filter and sort courses based on selected filters
     const filteredCourses = courses
         .filter(course => {
+            // For students, only show published courses
+            // For instructors, show all courses
+            if (!isInstructor && course.status !== 'PUBLISHED') {
+                return false
+            }
+            
             // Price filter (in a real app, this would be handled by the API)
             if (priceFilter === 'free') {
                 // Since we don't have price in CourseDTO, we'll use moduleCount as a proxy
