@@ -1,29 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import { CourseDetailsLayout } from "@/components/layout/CourseDetailsLayout"
-import { mockCourses } from "@/data/mock-data"
-import { Course } from "@/types/course"
+import { CourseView } from "@/components/courses/CourseView"
 
 export default function StudentCourseDetailsPage() {
   const params = useParams()
-  const courseId = params.id as string
-  const [course, setCourse] = useState<Course | null>(null)
+  const courseId = parseInt(params.id as string, 10)
 
-  useEffect(() => {
-    // Find the course from mock data
-    const foundCourse = mockCourses.find(c => c.id === courseId)
-    setCourse(foundCourse || null)
-  }, [courseId])
-
-  if (!course) {
+  // If courseId is not a valid number, redirect to courses page or show error
+  if (isNaN(courseId)) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen flex-col">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">Invalid Course ID</h2>
+        <p className="text-gray-600">The course you're looking for doesn't exist.</p>
       </div>
     )
   }
 
-  return <CourseDetailsLayout course={course} userRole="STUDENT" />
+  return <CourseView courseId={courseId} userRole="STUDENT" />
 }

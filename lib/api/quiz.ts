@@ -298,5 +298,24 @@ export const quizApi = {
       const message = error.response?.data?.message || error.message || 'Failed to delete quiz answer'
       throw new Error(message)
     }
+  },
+
+  /**
+   * Submit a quiz result
+   */
+  submitQuizResult: async (data: { quizId: number; score: number }): Promise<any> => {
+    try {
+      const response = await apiClient.post(`/quizzes/${data.quizId}/submit`, data)
+      
+      if (response.status !== 200 && response.status !== 201) {
+        throw new Error('Failed to submit quiz result')
+      }
+      
+      return response.data
+    } catch (error: any) {
+      console.error(`Failed to submit result for quiz with ID ${data.quizId}:`, error)
+      const message = error.response?.data?.message || error.message || 'Failed to submit quiz result'
+      throw new Error(message)
+    }
   }
 }
