@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { CourseDTO, ModuleDTO } from "@/types"
-import { courseApi, enrollmentApi, moduleApi } from "@/lib/api"
+import { courseApi, enrollmentApi, moduleApi, apiClient } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { useModuleProgress } from "@/hooks/use-module-progress"
@@ -38,6 +38,7 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
   const [currentModule, setCurrentModule] = useState<ModuleDTO | null>(null)
   const [loading, setLoading] = useState(true)
   const [isEnrolled, setIsEnrolled] = useState(false)
+  const [completingModule, setCompletingModule] = useState(false)
   
   const { user } = useAuth()
   const { toast } = useToast()
@@ -145,23 +146,37 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
         contentCloudFrontUrl: currentModule.contentCloudFrontUrl
       });
       
+      // For quiz modules, we don't need to test the content URL
+      if (currentModule.type === 'QUIZ') return;
+      
       // Test fetch the content to check for CORS issues
       const testContentUrl = async (url: string) => {
         if (!url) return;
         
-        console.log(`CourseContent: Testing content URL: ${url}`);
+        // Ensure URL is absolute and well-formed
+        let testUrl = url;
+        if (url.startsWith('/')) {
+          // For relative URLs, prepend the API base URL
+          const apiBaseUrl = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8090/api';
+          testUrl = `${apiBaseUrl}${url}`;
+        } else if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          testUrl = `https://${url}`;
+        }
+        
+        console.log(`CourseContent: Testing content URL: ${testUrl}`);
+        
         try {
           // Make a HEAD request to check if the URL is accessible
-          const response = await fetch(url, { 
+          const response = await fetch(testUrl, { 
             method: 'HEAD',
-            mode: 'cors'
+            mode: 'no-cors' // Use no-cors to avoid CORS errors in the console
           });
           console.log(`CourseContent: URL test result: ${response.status} ${response.statusText}`, {
             headers: Object.fromEntries(response.headers.entries()),
             url: response.url
           });
         } catch (error) {
-          console.error(`CourseContent: URL test failed: ${url}`, error);
+          console.error(`CourseContent: URL test failed: ${testUrl}`, error);
         }
       };
       
@@ -169,7 +184,7 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
       if (currentModule.contentCloudFrontUrl) {
         testContentUrl(currentModule.contentCloudFrontUrl);
       }
-      if (currentModule.contentUrl) {
+      if (currentModule.contentUrl && (currentModule.type === 'VIDEO' || currentModule.type === 'PDF')) {
         testContentUrl(currentModule.contentUrl);
       }
       
@@ -205,35 +220,48 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
   
   // Handle module completion
   const markModuleAsCompleted = async (moduleId: number) => {
+    setCompletingModule(true)
     try {
+      console.log(`Marking module ${moduleId} as completed...`);
       // Call the hook to mark module as completed
       const success = await markModuleCompleted(moduleId)
       
       if (success) {
-        // Update the module in the local state
+        console.log(`Module ${moduleId} marked as completed successfully`);
+        // Update the module in the local state without changing the current module
         setModules(prevModules => 
           prevModules.map(m => 
             m.id === moduleId ? { ...m, completed: true } : m
           )
         )
+        
+        // Also update currentModule if it's the one being completed
+        setCurrentModule(prevModule => 
+          prevModule && prevModule.id === moduleId ? 
+            { ...prevModule, completed: true } : 
+            prevModule
+        )
+        
+        toast({
+          title: "Module Completed",
+          description: "Great job! You've completed this module. Click 'Next' to continue.",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to mark module as completed. Please try again.",
+          variant: "destructive",
+        })
       }
-      
-      // Find the next module
-      const currentIndex = modules.findIndex(m => m.id === moduleId)
-      if (currentIndex < modules.length - 1) {
-        setCurrentModule(modules[currentIndex + 1])
-      }
-      
-      toast({
-        title: "Module Completed",
-        description: "Great job! You've completed this module.",
-      })
     } catch (error) {
+      console.error("Error marking module as completed:", error);
       toast({
         title: "Error",
         description: "Failed to mark module as completed. Please try again.",
         variant: "destructive",
       })
+    } finally {
+      setCompletingModule(false)
     }
   }
 
@@ -399,12 +427,62 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
               
               {/* Module content */}
               <div className="flex-1 p-4 overflow-auto">
+                {/* Enhanced logging for quiz modules */}
+                {currentModule.type === 'QUIZ' && (() => {
+                  console.log('CourseContent: Quiz module details:', {
+                    moduleId: currentModule.id,
+                    quizId: currentModule.quizId,
+                    moduleType: currentModule.type,
+                    moduleTitle: currentModule.title,
+                    contentUrl: currentModule.contentUrl,
+                    contentCloudFrontUrl: currentModule.contentCloudFrontUrl
+                  });
+                  
+                  // Check if quiz has a valid URL format
+                  if (currentModule.quizId) {
+                    console.log(`CourseContent: Quiz URL for quiz ${currentModule.quizId} would be: ${apiClient.defaults.baseURL}quizzes/${currentModule.quizId}`);
+                  }
+                  
+                  return null; // Return null so React doesn't try to render anything
+                })()}
+                
                 {currentModule.type === 'QUIZ' ? (
-                  <QuizTaker
-                    moduleId={currentModule.id}
-                    quizId={currentModule.quizId}
-                    onComplete={() => markModuleAsCompleted(currentModule.id)}
-                  />
+                  currentModule.quizId ? (
+                    <div>
+                      {/* Add debug info in development mode */}
+                      {process.env.NODE_ENV === 'development' && (
+                        <div className="mb-4 p-2 bg-gray-100 text-xs font-mono rounded">
+                          <p>Debug info (only visible in development):</p>
+                          <p>Quiz ID: {currentModule.quizId}</p>
+                          <p>Module ID: {currentModule.id}</p>
+                        </div>
+                      )}
+                      
+                      <QuizTaker
+                        moduleId={currentModule.id}
+                        quizId={currentModule.quizId}
+                        onComplete={() => markModuleAsCompleted(currentModule.id)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <h2 className="text-xl font-bold text-gray-800">Quiz Configuration Error</h2>
+                      <p className="text-gray-600 mt-2">
+                        This quiz module is not properly configured. Missing quiz reference.
+                      </p>
+                      {userRole === 'INSTRUCTOR' && (
+                        <div className="mt-4">
+                          <p className="text-amber-600">
+                            <AlertCircle className="inline-block w-4 h-4 mr-1" />
+                            Instructor Note: Please update this module to associate it with a valid quiz.
+                          </p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Module ID: {currentModule.id} - Quiz ID: {currentModule.quizId || 'Not set'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )
                 ) : (
                   <div className="flex flex-col h-full">
                     <div className="flex-1">
@@ -440,28 +518,50 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
                       {currentModule.type === 'PDF' && (
                         <div className="w-full h-[70vh]">
                           {(currentModule.contentCloudFrontUrl || currentModule.contentUrl) ? (
-                            <iframe
-                              key={currentModule.id} // Add key to force re-render when URL changes
-                              src={`${currentModule.contentCloudFrontUrl || currentModule.contentUrl}#toolbar=0`}
-                              className="w-full h-full border-0"
-                              title={currentModule.title}
-                              onError={() => {
-                                console.error("PDF iframe error");
-                                // Fallback handled by iframe's default error behavior
-                              }}
-                            >
-                              <p>
-                                It appears you don't have a PDF plugin for this browser.
-                                You can <a 
-                                  href={currentModule.contentCloudFrontUrl || currentModule.contentUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:underline"
+                            <>
+                              <object
+                                data={currentModule.contentCloudFrontUrl || currentModule.contentUrl}
+                                type="application/pdf"
+                                className="w-full h-full border-0 rounded"
+                                onLoad={() => console.log("PDF loaded successfully")}
+                                onError={(e) => {
+                                  console.error("PDF viewing error", e);
+                                  toast({
+                                    title: "PDF Viewing Error",
+                                    description: "Unable to load PDF directly. Try downloading it instead.",
+                                    variant: "destructive",
+                                  });
+                                }}
+                              >
+                                <p className="p-4 text-center">
+                                  Unable to display PDF directly. 
+                                  <a href={currentModule.contentCloudFrontUrl || currentModule.contentUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-blue-600 hover:underline ml-1">
+                                    Click here to open it in a new tab
+                                  </a>.
+                                </p>
+                              </object>
+                              <div className="mt-2 text-center">
+                                <a 
+                                  href={currentModule.contentCloudFrontUrl || currentModule.contentUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer" 
+                                  className="text-blue-600 hover:underline text-sm flex items-center justify-center gap-2"
                                 >
-                                  click here to download the PDF file
-                                </a>.
-                              </p>
-                            </iframe>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                  </svg>
+                                  Download PDF
+                                </a>
+                                <p className="text-xs text-gray-500">
+                                  If the PDF isn't loading correctly, try opening it in a new tab
+                                </p>
+                              </div>
+                            </>
                           ) : (
                             <div className="flex items-center justify-center h-full bg-gray-100 rounded-md">
                               <p className="text-gray-500">PDF content not available</p>
@@ -538,8 +638,16 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
                         <Button
                           onClick={() => markModuleAsCompleted(currentModule.id)}
                           className="w-full md:w-auto"
+                          disabled={completingModule}
                         >
-                          Mark as Completed
+                          {completingModule ? (
+                            <>
+                              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                              Marking as Completed...
+                            </>
+                          ) : (
+                            'Mark as Completed'
+                          )}
                         </Button>
                       )}
                     </div>

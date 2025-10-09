@@ -4,17 +4,16 @@ export const moduleProgressApi = {
   /**
    * Mark a module as completed
    */
-  markModuleCompleted: async (moduleId: number, userId?: number): Promise<any> => {
+  markModuleCompleted: async (moduleId: number): Promise<any> => {
     try {
-      const response = await apiClient.post(`/module-progress/complete`, { 
-        moduleId,
-        userId 
-      });
+      // This matches the Spring Boot controller endpoint: /api/progress/module/{moduleId}/complete
+      const response = await apiClient.post(`/progress/module/${moduleId}/complete`);
       
       if (response.status !== 200 && response.status !== 201) {
         throw new Error('Failed to mark module as completed');
       }
       
+      console.log('Module marked as completed successfully:', response.data);
       return response.data;
     } catch (error: any) {
       console.error(`Failed to mark module ${moduleId} as completed:`, error);
@@ -28,7 +27,8 @@ export const moduleProgressApi = {
    */
   getModuleCompletionStatus: async (moduleId: number): Promise<boolean> => {
     try {
-      const response = await apiClient.get(`/module-progress/${moduleId}/status`);
+      // This matches the Spring Boot controller endpoint: /api/progress/user/module/{moduleId}
+      const response = await apiClient.get(`/progress/user/module/${moduleId}`);
       
       if (response.status !== 200) {
         throw new Error('Failed to get module completion status');
@@ -47,14 +47,17 @@ export const moduleProgressApi = {
    */
   getUserCompletedModules: async (): Promise<number[]> => {
     try {
-      const response = await apiClient.get(`/module-progress/completed`);
+      // This matches the Spring Boot controller endpoint: /api/progress/user
+      const response = await apiClient.get(`/progress/user`);
       
       if (response.status !== 200) {
         throw new Error('Failed to get completed modules');
       }
       
-      // Return an array of module IDs
-      return response.data.map((item: any) => item.moduleId);
+      // Return an array of module IDs, mapping from the ProgressDTO
+      return response.data
+        .filter((item: any) => item.completed)
+        .map((item: any) => item.moduleId);
     } catch (error: any) {
       console.error('Failed to get completed modules:', error);
       const message = error.response?.data?.message || error.message || 'Failed to get completed modules';
@@ -67,13 +70,14 @@ export const moduleProgressApi = {
    */
   getCourseProgress: async (courseId: number): Promise<number> => {
     try {
-      const response = await apiClient.get(`/module-progress/course/${courseId}/progress`);
+      // This matches the Spring Boot controller endpoint: /api/progress/course/{courseId}/stats
+      const response = await apiClient.get(`/progress/course/${courseId}/stats`);
       
       if (response.status !== 200) {
         throw new Error('Failed to get course progress');
       }
       
-      return response.data.progressPercentage;
+      return response.data.completionPercentage;
     } catch (error: any) {
       console.error(`Failed to get progress for course ${courseId}:`, error);
       const message = error.response?.data?.message || error.message || 'Failed to get course progress';

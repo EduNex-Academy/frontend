@@ -40,17 +40,74 @@ export function QuizTaker({ moduleId, quizId, onComplete }: QuizTakerProps) {
       try {
         setLoading(true)
         
+        // Log the quiz ID to debug
+        console.log(`QuizTaker: Fetching quiz with ID ${quizId}`)
+        
         // First get the quiz
-        const quizData = await quizApi.getQuizById(quizId)
+        let quizData;
+        try {
+          quizData = await quizApi.getQuizById(quizId)
+          console.log('QuizTaker: Quiz data fetched successfully:', quizData)
+        } catch (error: any) {
+          console.error('QuizTaker: Failed to fetch quiz metadata:', error)
+          toast({
+            title: "Error Loading Quiz",
+            description: error.message || "Could not load quiz information. Please try again later.",
+            variant: "destructive",
+          })
+          setLoading(false)
+          return
+        }
         
         // Then get all questions for the quiz
-        const questionsData = await quizApi.getQuizQuestionsByQuizId(quizId)
+        console.log(`QuizTaker: Fetching questions for quiz ${quizId}`)
+        let questionsData;
+        try {
+          questionsData = await quizApi.getQuizQuestionsByQuizId(quizId)
+          console.log('QuizTaker: Questions data fetched successfully:', questionsData)
+        } catch (error: any) {
+          console.error('QuizTaker: Failed to fetch quiz questions:', error)
+          // Even if we failed to get questions, we can still show the quiz metadata
+          setQuiz({
+            ...quizData,
+            questions: []
+          })
+          toast({
+            title: "Quiz Questions Unavailable",
+            description: "Could not load quiz questions. The server might be experiencing issues.",
+            variant: "destructive",
+          })
+          setLoading(false)
+          return
+        }
+        
+        if (!questionsData || questionsData.length === 0) {
+          console.warn('QuizTaker: No questions found for this quiz')
+          // Set the quiz with empty questions array
+          setQuiz({
+            ...quizData,
+            questions: []
+          })
+          return
+        }
         
         // For each question, fetch its answers
+        console.log('QuizTaker: Fetching answers for each question')
         const questionsWithAnswers = await Promise.all(
           questionsData.map(async (question) => {
-            const answers = await quizApi.getQuizAnswersByQuestionId(question.id)
-            return { ...question, answers }
+            try {
+              const answers = await quizApi.getQuizAnswersByQuestionId(question.id)
+              return { ...question, answers }
+            } catch (error) {
+              console.error(`QuizTaker: Error fetching answers for question ${question.id}:`, error)
+              // Return the question with empty answers if there was an error
+              toast({
+                title: "Warning",
+                description: `Could not load answers for question ${question.id}. Some quiz content may be incomplete.`,
+                variant: "default",
+              })
+              return { ...question, answers: [] }
+            }
           })
         )
         
@@ -59,10 +116,11 @@ export function QuizTaker({ moduleId, quizId, onComplete }: QuizTakerProps) {
           ...quizData,
           questions: questionsWithAnswers
         })
-      } catch (error) {
+      } catch (error: any) {
+        console.error('QuizTaker: Error loading quiz data:', error)
         toast({
           title: "Error",
-          description: "Failed to load quiz data. Please try again.",
+          description: error.message || "Failed to load quiz data. Please try again.",
           variant: "destructive",
         })
       } finally {
@@ -159,17 +217,70 @@ export function QuizTaker({ moduleId, quizId, onComplete }: QuizTakerProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+        <p className="text-blue-600">Loading quiz...</p>
+        <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
       </div>
     )
   }
 
-  if (!quiz || !quiz.questions || quiz.questions.length === 0) {
+  if (!quiz) {
     return (
       <div className="text-center py-8">
         <h2 className="text-xl font-bold text-gray-800">Quiz not available</h2>
-        <p className="text-gray-600 mt-2">This quiz has no questions or is not available.</p>
+        <p className="text-gray-600 mt-2">
+          We couldn't load this quiz. It might be temporarily unavailable or have been removed.
+        </p>
+        <p className="text-amber-600 text-sm mt-1">Error: Unable to load quiz data from server</p>
+        
+        {/* Add a retry button */}
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+        >
+          Retry Loading Quiz
+        </button>
+        
+        <div className="mt-6 p-4 border rounded bg-amber-50 border-amber-200 text-left max-w-md mx-auto">
+          <h3 className="text-md font-medium mb-2 text-amber-800">Troubleshooting Tips:</h3>
+          <ul className="list-disc pl-5 text-sm text-amber-700">
+            <li>Check your internet connection</li>
+            <li>There may be a temporary server issue</li>
+            <li>Wait a few minutes and try again</li>
+            <li>Contact your instructor if the problem persists</li>
+          </ul>
+        </div>
+      </div>
+    )
+  }
+  
+  if (!quiz.questions || quiz.questions.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <h2 className="text-xl font-bold text-gray-800">Quiz content missing</h2>
+        <p className="text-gray-600 mt-2">
+          This quiz exists but has no questions yet or we encountered an error loading them.
+        </p>
+        <p className="text-blue-600 text-sm mt-1">Quiz Title: {quiz.title || 'Unnamed Quiz'}</p>
+        
+        {/* Add a retry button */}
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+        >
+          Retry Loading Questions
+        </button>
+        
+        <div className="mt-6 p-4 border rounded bg-blue-50 border-blue-200 text-left max-w-md mx-auto">
+          <h3 className="text-md font-medium mb-2 text-blue-800">Possible reasons:</h3>
+          <ul className="list-disc pl-5 text-sm text-blue-700">
+            <li>The instructor has not added any questions yet</li>
+            <li>There was a server error retrieving quiz questions</li>
+            <li>There may be an issue with the quiz configuration</li>
+            <li>The server may be experiencing a temporary outage</li>
+          </ul>
+        </div>
       </div>
     )
   }
