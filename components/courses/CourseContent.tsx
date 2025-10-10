@@ -70,8 +70,19 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
         }
         
         // Fetch course data with modules
-        const courseData = await courseApi.getCourseById(courseId, true)
+        const courseData = await courseApi.getCourseById(courseId, true, userRole)
         setCourse(courseData)
+        
+        // If student tries to access a DRAFT course, redirect to courses page
+        if (userRole === 'STUDENT' && courseData.status !== 'PUBLISHED') {
+          toast({
+            title: "Course Not Available",
+            description: "This course is not published yet and cannot be viewed.",
+            variant: "destructive",
+          })
+          router.push(`/student/courses`)
+          return
+        }
         
         if (courseData.modules && courseData.modules.length > 0) {
           const sortedModules = [...courseData.modules].sort((a, b) => a.moduleOrder - b.moduleOrder)

@@ -5,10 +5,13 @@ export const courseApi = {
   /**
    * Get all courses
    */
-  getAllCourses: async (query: string): Promise<CourseDTO[]> => {
+  getAllCourses: async (query: string, status?: 'PUBLISHED' | 'DRAFT'): Promise<CourseDTO[]> => {
     try {
+      // Log the exact request parameters for debugging
+      console.log('Requesting courses with parameters:', { query, status });
+      
       const response = await apiClient.get<CourseDTO[]>('/courses/search', {
-        params: { query }
+        params: { query, status }
       })
 
       console.log('Fetched courses:', response)
@@ -48,10 +51,13 @@ export const courseApi = {
   /**
    * Get course by ID
    */
-  getCourseById: async (id: number, includeModules: boolean = false): Promise<CourseDTO> => {
+  getCourseById: async (id: number, includeModules: boolean = false, userRole?: 'STUDENT' | 'INSTRUCTOR'): Promise<CourseDTO> => {
     try {
+      // If user is a student, only fetch published courses
+      const status = userRole === 'STUDENT' ? 'PUBLISHED' : undefined
+      
       const response = await apiClient.get<CourseDTO>(`/courses/${id}`, {
-        params: { includeModules }
+        params: { includeModules, status }
       })
       
       if (response.status !== 200) {

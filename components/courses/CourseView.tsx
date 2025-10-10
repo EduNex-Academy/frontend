@@ -54,7 +54,7 @@ export function CourseView({ courseId, userRole }: CourseViewProps) {
         setLoading(true)
         console.log("CourseView: Calling API for courseId:", courseId)
         
-        const courseData = await courseApi.getCourseById(courseId, true)
+        const courseData = await courseApi.getCourseById(courseId, true, userRole)
         console.log("CourseView: API returned course data:", courseData)
         
         setCourse(courseData)
@@ -179,6 +179,22 @@ export function CourseView({ courseId, userRole }: CourseViewProps) {
         <Button
           className="mt-4"
           onClick={() => router.push(`/${userRole.toLowerCase()}/courses`)}
+        >
+          Back to Courses
+        </Button>
+      </div>
+    )
+  }
+
+  // If student tries to access a DRAFT course, redirect to courses page
+  if (userRole === 'STUDENT' && course.status !== 'PUBLISHED') {
+    return (
+      <div className="text-center py-16">
+        <h2 className="text-2xl font-bold text-gray-800">Course not available</h2>
+        <p className="text-gray-600 mt-2">This course is not published yet and cannot be viewed.</p>
+        <Button
+          className="mt-4"
+          onClick={() => router.push(`/student/courses`)}
         >
           Back to Courses
         </Button>
