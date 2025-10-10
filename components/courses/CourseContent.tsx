@@ -449,15 +449,6 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
                 {currentModule.type === 'QUIZ' ? (
                   currentModule.quizId ? (
                     <div>
-                      {/* Add debug info in development mode */}
-                      {process.env.NODE_ENV === 'development' && (
-                        <div className="mb-4 p-2 bg-gray-100 text-xs font-mono rounded">
-                          <p>Debug info (only visible in development):</p>
-                          <p>Quiz ID: {currentModule.quizId}</p>
-                          <p>Module ID: {currentModule.id}</p>
-                        </div>
-                      )}
-                      
                       <QuizTaker
                         moduleId={currentModule.id}
                         quizId={currentModule.quizId}
