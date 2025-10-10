@@ -169,7 +169,7 @@ export function QuizTaker({ moduleId, quizId, onComplete }: QuizTakerProps) {
         if (!selectedAnswerId) return // No answer selected
         
         const selectedAnswer = question.answers.find(a => a.id === selectedAnswerId)
-        if (selectedAnswer?.isCorrect) {
+        if (selectedAnswer?.correct) {
           correctAnswers++
         }
       })
@@ -339,7 +339,7 @@ export function QuizTaker({ moduleId, quizId, onComplete }: QuizTakerProps) {
               {quiz.questions.map((question, index) => {
                 const selectedAnswerId = answers[question.id]
                 const selectedAnswer = question.answers.find(a => a.id === selectedAnswerId)
-                const isCorrect = selectedAnswer?.isCorrect || false
+                const isCorrect = selectedAnswer?.correct || false
                 
                 return (
                   <div 
@@ -370,7 +370,7 @@ export function QuizTaker({ moduleId, quizId, onComplete }: QuizTakerProps) {
                             <>
                               <p className="font-medium mt-2">Correct answer:</p>
                               <p>
-                                {question.answers.find(a => a.isCorrect)?.answerText || "No correct answer provided"}
+                                {question.answers.find(a => a.correct)?.answerText || "No correct answer provided"}
                               </p>
                             </>
                           )}

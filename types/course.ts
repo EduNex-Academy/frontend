@@ -113,7 +113,7 @@ export interface ModuleDTO {
 export interface QuizAnswerDTO {
   id: number
   answerText: string
-  isCorrect: boolean
+  correct: boolean
   questionId: number
 }
 
