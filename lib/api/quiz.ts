@@ -206,8 +206,34 @@ export const quizApi = {
         return [];
       }
       
-      console.log(`Quiz API: Successfully fetched ${response.data.length} questions for quiz ${quizId}`)
-      return response.data
+      // For each question, fetch the answers if they're not included
+      const questions = response.data;
+      
+      // Process each question to ensure it has answers
+      for (let i = 0; i < questions.length; i++) {
+        const question = questions[i];
+        
+        // If answers are missing or empty, fetch them
+        if (!question.answers || question.answers.length === 0) {
+          console.log(`Quiz API: Question ${question.id} has no answers, fetching them...`);
+          try {
+            const answers = await apiClient.get<QuizAnswerDTO[]>(`/quiz-answers/question/${question.id}`);
+            if (answers.status === 200 && Array.isArray(answers.data)) {
+              question.answers = answers.data;
+              console.log(`Quiz API: Successfully fetched ${answers.data.length} answers for question ${question.id}`);
+            } else {
+              console.warn(`Quiz API: Failed to fetch answers for question ${question.id}`);
+              question.answers = []; // Set empty array to avoid null/undefined issues
+            }
+          } catch (error) {
+            console.error(`Quiz API: Error fetching answers for question ${question.id}:`, error);
+            question.answers = []; // Set empty array to avoid null/undefined issues
+          }
+        }
+      }
+      
+      console.log(`Quiz API: Successfully fetched ${questions.length} questions for quiz ${quizId}`)
+      return questions
     } catch (error: any) {
       // Log detailed error
       console.error(`Failed to fetch questions for quiz with ID ${quizId}:`, error)
@@ -371,7 +397,13 @@ export const quizApi = {
    */
   submitQuizResult: async (data: { quizId: number; score: number }): Promise<any> => {
     try {
-      const response = await apiClient.post(`/quizzes/${data.quizId}/submit`, data)
+      // Create a QuizResultDTO object matching the backend's expectations
+      const quizResultData = {
+        quizId: data.quizId,
+        score: data.score,
+      }
+      
+      const response = await apiClient.post(`/quiz-results`, quizResultData)
       
       if (response.status !== 200 && response.status !== 201) {
         throw new Error('Failed to submit quiz result')

@@ -69,34 +69,23 @@ export function QuizTaker({ moduleId, quizId, onComplete }: QuizTakerProps) {
           throw new Error('Quiz not found')
         }
         
-        // Always fetch the latest questions with answers
-        console.log('QuizTaker: Fetching questions with answers...')
-        try {
-          const questions = await quizApi.getQuizQuestionsByQuizId(quizData.id)
-          console.log('QuizTaker: Quiz questions fetched:', questions)
-          
-          if (!questions || questions.length === 0) {
-            throw new Error('No questions found for this quiz')
-          }
-          
-          // Check if each question has answers
-          let hasQuestionWithoutAnswers = false;
-          for (const question of questions) {
-            if (!question.answers || question.answers.length === 0) {
-              console.warn(`QuizTaker: Question ${question.id} has no answers`)
-              hasQuestionWithoutAnswers = true;
+        // If the quiz has no questions, we need to fetch them
+        if (!quizData.questions || quizData.questions.length === 0) {
+          console.log('QuizTaker: Quiz has no questions, fetching them...')
+          try {
+            const questions = await quizApi.getQuizQuestionsByQuizId(quizData.id)
+            console.log('QuizTaker: Quiz questions fetched:', questions)
+            
+            if (!questions || questions.length === 0) {
+              throw new Error('No questions found for this quiz')
             }
+            
+            // Add questions to the quiz data
+            quizData.questions = questions
+          } catch (error) {
+            console.error('QuizTaker: Failed to fetch quiz questions:', error)
+            throw new Error('Failed to load quiz questions')
           }
-          
-          if (hasQuestionWithoutAnswers) {
-            console.warn('QuizTaker: Some questions have no answers, this might cause issues')
-          }
-          
-          // Add questions to the quiz data
-          quizData.questions = questions
-        } catch (error) {
-          console.error('QuizTaker: Failed to fetch quiz questions:', error)
-          throw new Error('Failed to load quiz questions')
         }
         
         console.log('QuizTaker: Setting quiz data:', quizData)
@@ -404,20 +393,6 @@ export function QuizTaker({ moduleId, quizId, onComplete }: QuizTakerProps) {
   if (reviewMode) {
     const isPassed = score >= 75
     
-    // Make sure quiz is not null before accessing properties in review mode
-    if (!quiz || !quiz.questions) {
-      return (
-        <div className="max-w-2xl mx-auto py-8 text-center">
-          <Card className="border border-blue-100">
-            <CardContent className="py-8">
-              <p>Error loading quiz data. Please try again.</p>
-              <Button onClick={restartQuiz} className="mt-4">Restart Quiz</Button>
-            </CardContent>
-          </Card>
-        </div>
-      )
-    }
-    
     return (
       <div className="max-w-2xl mx-auto py-8">
         <Card className="border border-blue-100">
@@ -466,8 +441,6 @@ export function QuizTaker({ moduleId, quizId, onComplete }: QuizTakerProps) {
               <h4 className="font-semibold text-lg">Your Answers:</h4>
               
               {quiz.questions.map((question, index) => {
-                if (!question || !question.answers) return null;
-                
                 const selectedAnswerId = answers[question.id]
                 const selectedAnswer = question.answers.find(a => a.id === selectedAnswerId)
                 const isCorrect = selectedAnswer?.correct || false
@@ -560,34 +533,7 @@ export function QuizTaker({ moduleId, quizId, onComplete }: QuizTakerProps) {
   }
   
   // Active quiz display
-  // Make sure quiz is not null before accessing properties
-  if (!quiz || !quiz.questions) {
-    return (
-      <div className="max-w-2xl mx-auto py-8 text-center">
-        <Card className="border border-blue-100">
-          <CardContent className="py-8">
-            <p>Loading quiz content...</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   const currentQuestion = quiz.questions[currentQuestionIndex]
-  // Make sure currentQuestion is not undefined
-  if (!currentQuestion) {
-    return (
-      <div className="max-w-2xl mx-auto py-8 text-center">
-        <Card className="border border-blue-100">
-          <CardContent className="py-8">
-            <p>Error loading question. Please try again.</p>
-            <Button onClick={restartQuiz} className="mt-4">Restart Quiz</Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-  
   const hasAnsweredCurrentQuestion = answers[currentQuestion.id] !== undefined
   const totalQuestions = quiz.questions.length
   const progress = Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100)
@@ -613,7 +559,7 @@ export function QuizTaker({ moduleId, quizId, onComplete }: QuizTakerProps) {
             onValueChange={(value) => handleAnswerSelect(currentQuestion.id, parseInt(value))}
             className="space-y-3"
           >
-            {Array.isArray(currentQuestion.answers) ? currentQuestion.answers.map((answer) => (
+            {currentQuestion.answers.map((answer) => (
               <div 
                 key={answer.id} 
                 className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-gray-50 cursor-pointer"
@@ -623,9 +569,7 @@ export function QuizTaker({ moduleId, quizId, onComplete }: QuizTakerProps) {
                   {answer.answerText}
                 </Label>
               </div>
-            )) : (
-              <p className="text-amber-600">No answers available for this question</p>
-            )}
+            ))}
           </RadioGroup>
         </CardContent>
         
