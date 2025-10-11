@@ -92,12 +92,12 @@ export function CourseCard({ course, userRole = 'STUDENT' }: CourseCardProps) {
           <div className="absolute bottom-0 left-0 right-0 bg-white/90 p-1.5">
             <div className="flex justify-between items-center text-xs mb-1">
               <span className="font-medium">Progress</span>
-              <span>{course.completionPercentage}% complete</span>
+              <span>{course.completionPercentage?.toFixed(2)}% complete</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-1.5">
               <div 
                 className="bg-blue-600 h-1.5 rounded-full transition-all duration-500" 
-                style={{ width: `${course.completionPercentage}%` }}
+                style={{ width: `${course.completionPercentage?.toFixed(2)}%` }}
               />
             </div>
           </div>
