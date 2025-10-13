@@ -174,5 +174,47 @@ export const courseApi = {
       const message = error.response?.data?.message || error.message || 'Failed to publish course'
       throw new Error(message)
     }
+  },
+
+  /**
+   * Get enrolled courses for current user
+   */
+  getEnrolledCourses: async (status?: 'PUBLISHED' | 'DRAFT'): Promise<CourseDTO[]> => {
+    try {
+      const response = await apiClient.get<CourseDTO[]>('/courses/enrolled', {
+        params: { status }
+      })
+      
+      if (response.status !== 200) {
+        throw new Error('Failed to fetch enrolled courses')
+      }
+      
+      return response.data
+    } catch (error: any) {
+      console.error('Failed to fetch enrolled courses:', error)
+      const message = error.response?.data?.message || error.message || 'Failed to fetch enrolled courses'
+      throw new Error(message)
+    }
+  },
+
+  /**
+   * Get courses by category
+   */
+  getCoursesByCategory: async (category: string, status?: 'PUBLISHED' | 'DRAFT'): Promise<CourseDTO[]> => {
+    try {
+      const response = await apiClient.get<CourseDTO[]>(`/courses/category/${category}`, {
+        params: { status }
+      })
+      
+      if (response.status !== 200) {
+        throw new Error('Failed to fetch courses by category')
+      }
+      
+      return response.data
+    } catch (error: any) {
+      console.error(`Failed to fetch courses by category ${category}:`, error)
+      const message = error.response?.data?.message || error.message || 'Failed to fetch courses by category'
+      throw new Error(message)
+    }
   }
 }

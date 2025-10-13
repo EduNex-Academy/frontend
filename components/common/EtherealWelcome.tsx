@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, CreditCard, Radius } from 'lucide-react';
 import { useRouter } from "next/navigation"
+import { useAuth } from '@/hooks/use-auth'
 
 export default function EtherealWelcome() {
   const [timeOffset, setTimeOffset] = useState(0);
   const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -13,6 +15,35 @@ export default function EtherealWelcome() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Get user's display name
+  const getDisplayName = () => {
+    if (!user) return 'Student';
+    return user.firstName || user.username || 'Student';
+  };
+
+  // Get personalized welcome message
+  const getWelcomeMessage = () => {
+    if (!user) return 'Step into the extraordinary realm of infinite possibilities.';
+    const name = user.firstName || 'there';
+    return `Ready to continue your learning journey, ${name}?`;
+  };
+
+  // Get subscription status message
+  const getSubscriptionMessage = () => {
+    if (!user) return 'Unlock your potential with our premium courses.';
+    return user.subscriptionStatus === 'active' 
+      ? 'Your premium learning experience awaits.'
+      : 'Unlock your potential with our premium courses.';
+  };
+
+  // Get button text
+  const getButtonText = () => {
+    if (!user) return 'Manage Subscription';
+    return user.subscriptionStatus === 'active' 
+      ? 'Manage Subscription' 
+      : 'Upgrade to Premium';
+  };
 
   return (
     <div
@@ -90,7 +121,7 @@ export default function EtherealWelcome() {
               transform: `perspective(1000px) rotateX(${Math.sin(timeOffset * 0.3) * 2}deg)`
             }}
           >
-            Welcome back, John!
+            Welcome back, {getDisplayName()}!
           </h1>
           <p
             className="text-lg text-blue-50 mb-6 leading-relaxed"
@@ -99,8 +130,8 @@ export default function EtherealWelcome() {
               opacity: 0.95 + Math.sin(timeOffset * 0.8) * 0.05
             }}
           >
-            Step into the extraordinary realm of infinite possibilities.<br />
-            Your journey transcends the ordinary.
+            {getWelcomeMessage()}<br />
+            {getSubscriptionMessage()}
           </p>
         </div>
 
@@ -131,7 +162,9 @@ export default function EtherealWelcome() {
                   filter: `drop-shadow(0 0 4px rgba(96,165,250,0.5))`
                 }}
               />
-              <span className="tracking-wide">Manage Subscription</span>
+              <span className="tracking-wide">
+                {getButtonText()}
+              </span>
             </div>
 
             {/* Hover overlay shimmer effect */}

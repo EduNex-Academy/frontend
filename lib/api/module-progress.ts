@@ -104,5 +104,29 @@ export const moduleProgressApi = {
       const message = error.response?.data?.message || error.message || 'Failed to get course progress';
       throw new Error(message);
     }
+  },
+
+  /**
+   * Get detailed course progress statistics
+   */
+  getCourseProgressStats: async (courseId: number): Promise<{
+    totalModules: number;
+    completedModules: number;
+    progressPercentage: number;
+    lastActivity: string;
+  }> => {
+    try {
+      const response = await apiClient.get(`/progress/course/${courseId}/stats`);
+      
+      if (response.status !== 200) {
+        throw new Error('Failed to get course progress statistics');
+      }
+      
+      return response.data;
+    } catch (error: any) {
+      console.error(`Failed to get progress statistics for course ${courseId}:`, error);
+      const message = error.response?.data?.message || error.message || 'Failed to get course progress statistics';
+      throw new Error(message);
+    }
   }
 };

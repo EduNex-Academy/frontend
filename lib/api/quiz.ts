@@ -415,5 +415,62 @@ export const quizApi = {
       const message = error.response?.data?.message || error.message || 'Failed to submit quiz result'
       throw new Error(message)
     }
+  },
+
+  /**
+   * Get user's quiz results
+   */
+  getUserQuizResults: async (): Promise<any[]> => {
+    try {
+      const response = await apiClient.get<any[]>('/quiz-results/user')
+      
+      if (response.status !== 200) {
+        throw new Error('Failed to fetch user quiz results')
+      }
+      
+      return response.data
+    } catch (error: any) {
+      console.error('Failed to fetch user quiz results:', error)
+      const message = error.response?.data?.message || error.message || 'Failed to fetch user quiz results'
+      throw new Error(message)
+    }
+  },
+
+  /**
+   * Get quiz results for specific quiz
+   */
+  getQuizResults: async (quizId: number): Promise<any[]> => {
+    try {
+      const response = await apiClient.get<any[]>(`/quiz-results/quiz/${quizId}/results`)
+      
+      if (response.status !== 200) {
+        throw new Error('Failed to fetch quiz results')
+      }
+      
+      return response.data
+    } catch (error: any) {
+      console.error(`Failed to fetch results for quiz with ID ${quizId}:`, error)
+      const message = error.response?.data?.message || error.message || 'Failed to fetch quiz results'
+      throw new Error(message)
+    }
+  },
+
+  /**
+   * Get best quiz result for current user
+   */
+  getBestQuizResult: async (quizId: number): Promise<any> => {
+    try {
+      const response = await apiClient.get<any>(`/quiz-results/quiz/${quizId}/best`)
+      
+      if (response.status !== 200) {
+        throw new Error('Failed to fetch best quiz result')
+      }
+      
+      return response.data
+    } catch (error: any) {
+      console.error(`Failed to fetch best result for quiz with ID ${quizId}:`, error)
+      const message = error.response?.data?.message || error.message || 'Failed to fetch best quiz result'
+      throw new Error(message)
+    }
   }
 }
