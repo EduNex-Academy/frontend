@@ -86,7 +86,7 @@ export function CoursesPageLayout({ userRole, initialQuery = '' }: CoursesPageLa
     // Fetch courses when filters change
     useEffect(() => {
         fetchCourses()
-    }, [debouncedSearchQuery, selectedCategory, selectedLevel, selectedLearningPath, priceFilter, sortBy])
+    }, [debouncedSearchQuery, selectedCategory, selectedLevel, selectedLearningPath, priceFilter, sortBy, userRole])
     
     const fetchCourses = async () => {
         try {
@@ -105,9 +105,21 @@ export function CoursesPageLayout({ userRole, initialQuery = '' }: CoursesPageLa
                 query += ` path:${selectedLearningPath}`
             }
             
-            const coursesData = await courseApi.getAllCourses(query)
+            // For students, only fetch published courses
+            const coursesData = await courseApi.getAllCourses(
+                query, 
+                userRole === 'STUDENT' ? 'PUBLISHED' : undefined
+            )
             console.log('Fetched courses:', coursesData)
-            setCourses(coursesData)
+            
+            // As a safety measure, filter courses here for students
+            // This is a redundant check in case the backend doesn't filter properly
+            const filteredData = userRole === 'STUDENT' 
+                ? coursesData.filter(course => course.status === 'PUBLISHED')
+                : coursesData;
+                
+            console.log('After filtering:', filteredData);
+            setCourses(filteredData)
         } catch (err: any) {
             console.error('Error fetching courses:', err)
             setError(err.message || 'Failed to fetch courses')
@@ -142,10 +154,11 @@ export function CoursesPageLayout({ userRole, initialQuery = '' }: CoursesPageLa
     // Filter and sort courses based on selected filters
     const filteredCourses = courses
         .filter(course => {
-            // For students, only show published courses
-            // For instructors, show all courses
+            // Filter out draft courses for students
+            // The status can be undefined, so we need to check explicitly
             if (!isInstructor && course.status !== 'PUBLISHED') {
-                return false
+                console.log(`Filtering out course ${course.id}: ${course.title} with status ${course.status || 'undefined'}`);
+                return false;
             }
             
             // Price filter (in a real app, this would be handled by the API)

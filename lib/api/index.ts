@@ -9,6 +9,8 @@ export { pointsApi } from './points'
 export { courseApi } from './course'
 export { moduleApi } from './module'
 export { quizApi } from './quiz'
+export { enrollmentApi } from './enrollment'
+export { moduleProgressApi } from './module-progress'
 
 // Import APIs to create unified object
 import { authApi } from './auth'
@@ -18,6 +20,8 @@ import { pointsApi } from './points'
 import { courseApi } from './course'
 import { moduleApi } from './module'
 import { quizApi } from './quiz'
+import { enrollmentApi } from './enrollment'
+import { moduleProgressApi } from './module-progress'
 
 // Create a unified API object for backward compatibility
 export const api = {
@@ -27,5 +31,7 @@ export const api = {
   points: pointsApi,
   course: courseApi,
   module: moduleApi,
-  quiz: quizApi
+  quiz: quizApi,
+  enrollment: enrollmentApi,
+  moduleProgress: moduleProgressApi
 }

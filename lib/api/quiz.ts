@@ -1,5 +1,5 @@
 import { QuizDTO, QuizQuestionDTO, QuizAnswerDTO } from "@/types"
-import { apiClient } from './config'
+import { apiClient, normalizeUrlPath } from './config'
 
 export const quizApi = {
   /**
@@ -26,15 +26,39 @@ export const quizApi = {
    */
   getQuizById: async (id: number): Promise<QuizDTO> => {
     try {
+      // Validate ID
+      if (!id || isNaN(id) || id <= 0) {
+        throw new Error(`Invalid quiz ID: ${id}`)
+      }
+      
+      // Log request details
+      console.log(`Quiz API: Fetching quiz with ID ${id}`)
+      
       const response = await apiClient.get<QuizDTO>(`/quizzes/${id}`)
       
       if (response.status !== 200) {
         throw new Error('Failed to fetch quiz')
       }
       
+      console.log(`Quiz API: Successfully fetched quiz with ID ${id}`)
       return response.data
     } catch (error: any) {
+      // Log detailed error
       console.error(`Failed to fetch quiz with ID ${id}:`, error)
+      console.error(`Error details:`, {
+        message: error.message,
+        response: error.response ? {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data
+        } : 'No response',
+        request: error.request ? {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL
+        } : 'No request'
+      })
+      
       const message = error.response?.data?.message || error.message || 'Failed to fetch quiz'
       throw new Error(message)
     }
@@ -157,15 +181,83 @@ export const quizApi = {
    */
   getQuizQuestionsByQuizId: async (quizId: number): Promise<QuizQuestionDTO[]> => {
     try {
+      // Validate quiz ID
+      if (!quizId || isNaN(quizId) || quizId <= 0) {
+        throw new Error(`Invalid quiz ID: ${quizId}`)
+      }
+      
+      // Log request details
+      console.log(`Quiz API: Fetching questions for quiz with ID ${quizId}`)
+      
+      // Log the full URL being used
+      const fullUrl = apiClient.defaults.baseURL + `/quiz-questions/quiz/${quizId}`
+      console.log(`Quiz API: Full URL for questions request: ${fullUrl}`)
+      
       const response = await apiClient.get<QuizQuestionDTO[]>(`/quiz-questions/quiz/${quizId}`)
       
       if (response.status !== 200) {
         throw new Error('Failed to fetch quiz questions')
       }
       
-      return response.data
+      // Check if we received valid data
+      if (!response.data || !Array.isArray(response.data)) {
+        console.warn(`Quiz API: Received invalid data format for quiz ${quizId}:`, response.data);
+        // Return empty array instead of throwing
+        return [];
+      }
+      
+      // For each question, fetch the answers if they're not included
+      const questions = response.data;
+      
+      // Process each question to ensure it has answers
+      for (let i = 0; i < questions.length; i++) {
+        const question = questions[i];
+        
+        // If answers are missing or empty, fetch them
+        if (!question.answers || question.answers.length === 0) {
+          console.log(`Quiz API: Question ${question.id} has no answers, fetching them...`);
+          try {
+            const answers = await apiClient.get<QuizAnswerDTO[]>(`/quiz-answers/question/${question.id}`);
+            if (answers.status === 200 && Array.isArray(answers.data)) {
+              question.answers = answers.data;
+              console.log(`Quiz API: Successfully fetched ${answers.data.length} answers for question ${question.id}`);
+            } else {
+              console.warn(`Quiz API: Failed to fetch answers for question ${question.id}`);
+              question.answers = []; // Set empty array to avoid null/undefined issues
+            }
+          } catch (error) {
+            console.error(`Quiz API: Error fetching answers for question ${question.id}:`, error);
+            question.answers = []; // Set empty array to avoid null/undefined issues
+          }
+        }
+      }
+      
+      console.log(`Quiz API: Successfully fetched ${questions.length} questions for quiz ${quizId}`)
+      return questions
     } catch (error: any) {
+      // Log detailed error
       console.error(`Failed to fetch questions for quiz with ID ${quizId}:`, error)
+      console.error(`Error details:`, {
+        message: error.message,
+        response: error.response ? {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data
+        } : 'No response',
+        request: error.request ? {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL
+        } : 'No request'
+      })
+      
+      // If it's a server error (500), provide a more specific message
+      if (error.response?.status === 500) {
+        console.error('Server error occurred when fetching quiz questions. This could be due to database issues or quiz configuration problems.');
+        // Return empty array instead of throwing for 500 errors
+        return [];
+      }
+      
       const message = error.response?.data?.message || error.message || 'Failed to fetch quiz questions'
       throw new Error(message)
     }
@@ -296,6 +388,31 @@ export const quizApi = {
     } catch (error: any) {
       console.error(`Failed to delete quiz answer with ID ${id}:`, error)
       const message = error.response?.data?.message || error.message || 'Failed to delete quiz answer'
+      throw new Error(message)
+    }
+  },
+
+  /**
+   * Submit a quiz result
+   */
+  submitQuizResult: async (data: { quizId: number; score: number }): Promise<any> => {
+    try {
+      // Create a QuizResultDTO object matching the backend's expectations
+      const quizResultData = {
+        quizId: data.quizId,
+        score: data.score,
+      }
+      
+      const response = await apiClient.post(`/quiz-results`, quizResultData)
+      
+      if (response.status !== 200 && response.status !== 201) {
+        throw new Error('Failed to submit quiz result')
+      }
+      
+      return response.data
+    } catch (error: any) {
+      console.error(`Failed to submit result for quiz with ID ${data.quizId}:`, error)
+      const message = error.response?.data?.message || error.message || 'Failed to submit quiz result'
       throw new Error(message)
     }
   }

@@ -25,7 +25,7 @@ interface Question {
 
 interface Answer {
   answerText: string
-  isCorrect: boolean
+  isCorrect: boolean // Keep as isCorrect for internal usage, but map to correct when sending to API
 }
 
 export const QuizModuleForm: React.FC<QuizModuleFormProps> = ({
@@ -216,7 +216,7 @@ export const QuizModuleForm: React.FC<QuizModuleFormProps> = ({
         for (const answer of question.answers) {
           await quizApi.createQuizAnswer({
             answerText: answer.answerText,
-            isCorrect: answer.isCorrect,
+            correct: answer.isCorrect,
             questionId: createdQuestion.id
           })
         }
