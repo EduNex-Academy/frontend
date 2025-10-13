@@ -442,11 +442,11 @@ export function CourseView({ courseId, userRole }: CourseViewProps) {
                   <div className="w-full bg-gray-200 rounded-full h-2.5">
                     <div 
                       className="bg-blue-600 h-2.5 rounded-full" 
-                      style={{ width: `${course.completionPercentage || 0}%` }}
+                      style={{ width: `${(course.completionPercentage || 0).toFixed(2)}%` }}
                     ></div>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>{course.completionPercentage || 0}% complete</span>
+                    <span>{(course.completionPercentage || 0).toFixed(2)}% complete</span>
                     <span>{modules.filter(m => m.completed).length}/{modules.length} modules</span>
                   </div>
                   <Button 

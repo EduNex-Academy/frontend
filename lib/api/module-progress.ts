@@ -21,6 +21,27 @@ export const moduleProgressApi = {
       throw new Error(message);
     }
   },
+  
+  /**
+   * Get course progress details for a specific course
+   */
+  getCourseProgressDetails: async (courseId: number): Promise<any[]> => {
+    try {
+      // This matches the Spring Boot controller endpoint: /api/progress/course/{courseId}
+      const response = await apiClient.get(`/progress/course/${courseId}`);
+      
+      if (response.status !== 200) {
+        throw new Error('Failed to get course progress details');
+      }
+      
+      console.log(`Fetched progress details for course ${courseId}:`, response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error(`Failed to get progress details for course ${courseId}:`, error);
+      const message = error.response?.data?.message || error.message || 'Failed to get course progress details';
+      throw new Error(message);
+    }
+  },
 
   /**
    * Get completion status of a module for the current user

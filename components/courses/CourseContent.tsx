@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { CourseDTO, ModuleDTO } from "@/types"
 import { courseApi, enrollmentApi, moduleApi, apiClient } from "@/lib/api"
@@ -88,7 +88,7 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
           const sortedModules = [...courseData.modules].sort((a, b) => a.moduleOrder - b.moduleOrder)
           setModules(sortedModules)
           
-          // Find the first incomplete module or the first module if all are completed
+          // For instructor or if this is the first load, find the first incomplete module
           const firstIncompleteModule = sortedModules.find(module => !module.completed)
           setCurrentModule(firstIncompleteModule || sortedModules[0])
         }
@@ -110,6 +110,9 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
   const canAccessModule = (module: ModuleDTO) => {
     // Instructors can access all modules
     if (userRole === 'INSTRUCTOR') return true
+    
+    // If this module is marked as completed, user should be able to access it
+    if (module.completed) return true
     
     // Find the module index
     const moduleIndex = modules.findIndex(m => m.id === module.id)
@@ -146,6 +149,48 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
   
   // Use the module progress hook
   const { markModuleCompleted, isModuleCompleted, getCourseProgress } = useModuleProgress()
+  
+  // Fetch and apply course progress to unlock completed modules
+  const fetchAndApplyUserProgress = useCallback(async () => {
+    if (!courseId || userRole !== 'STUDENT' || !modules.length) return
+    
+    try {
+      console.log(`Fetching course progress for course ID ${courseId}...`)
+      const moduleProgressApi = (await import('@/lib/api')).moduleProgressApi
+      const progressDetails = await moduleProgressApi.getCourseProgressDetails(courseId)
+      
+      // Extract completed module IDs
+      const completedModuleIds = progressDetails
+        .filter(progress => progress.completed)
+        .map(progress => progress.moduleId)
+      
+      console.log(`Found ${completedModuleIds.length} completed modules:`, completedModuleIds)
+      
+      // Mark modules as completed in local state
+      if (completedModuleIds.length > 0) {
+        setModules(prevModules => 
+          prevModules.map(module => 
+            completedModuleIds.includes(module.id) ? { ...module, completed: true } : module
+          )
+        )
+      }
+    } catch (error) {
+      console.error("Error fetching course progress:", error)
+      toast({
+        title: "Warning",
+        description: "Could not retrieve your progress data. Some modules may appear locked.",
+        variant: "destructive",
+      })
+    }
+  }, [courseId, userRole, modules.length, toast])
+  
+  // Apply user progress when modules are loaded
+  useEffect(() => {
+    if (modules.length > 0 && userRole === 'STUDENT') {
+      console.log('CourseContent: Applying previously completed modules')
+      fetchAndApplyUserProgress()
+    }
+  }, [modules.length, fetchAndApplyUserProgress, userRole])
   
   // Log content URLs for debugging
   useEffect(() => {
