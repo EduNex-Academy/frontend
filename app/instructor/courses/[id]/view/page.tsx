@@ -1,13 +1,13 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { CourseView } from "@/components/courses/CourseView"
+import { CourseContent } from "@/components/courses/CourseContent"
 
-export default function InstructorCourseDetailsPage() {
+export default function InstructorCourseViewPage() {
   const params = useParams()
   const courseId = parseInt(params.id as string, 10)
 
-  // If courseId is not a valid number, redirect to courses page or show error
+  // If courseId is not a valid number, show error
   if (isNaN(courseId)) {
     return (
       <div className="flex items-center justify-center min-h-screen flex-col">
@@ -17,5 +17,5 @@ export default function InstructorCourseDetailsPage() {
     )
   }
 
-  return <CourseView courseId={courseId} userRole="INSTRUCTOR" />
+  return <CourseContent courseId={courseId} userRole="INSTRUCTOR" />
 }

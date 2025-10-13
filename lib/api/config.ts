@@ -3,7 +3,15 @@ import axios from 'axios'
 // API Gateway configuration
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8090/api'
 
-const API_BASE_URL = API_GATEWAY_URL
+// Ensure the URL ends with a trailing slash to prevent triple slash issues when paths are concatenated
+const ensureTrailingSlash = (url: string) => url.endsWith('/') ? url : `${url}/`
+const API_BASE_URL = ensureTrailingSlash(API_GATEWAY_URL)
+
+// Helper to normalize URL paths to prevent double/triple slashes
+export const normalizeUrlPath = (path: string): string => {
+  // Remove leading slash if exists (as baseURL already has trailing slash)
+  return path.startsWith('/') ? path.substring(1) : path
+}
 
 // Type for auth state
 interface AuthState {
@@ -24,9 +32,18 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 10 seconds timeout
+  timeout: 30000, // 30 seconds timeout
   withCredentials: true, // Include cookies in requests
 })
+
+// Add request debugging logger
+const requestLogger = (config: any) => {
+  console.log(`API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`, {
+    data: config.data,
+    params: config.params
+  });
+  return config;
+};
 
 // Store for auth state access (will be set by AuthProvider)
 let getAuthState: (() => AuthState) | null = null
@@ -69,6 +86,11 @@ const publicEndpoints = [
 // Request interceptor to add auth token (for main auth client)
 apiClient.interceptors.request.use(
   (config) => {
+    // Normalize URL path to prevent double/triple slashes
+    if (config.url) {
+      config.url = normalizeUrlPath(config.url)
+    }
+    
     // Check if this is a public endpoint that doesn't need Authorization header
     const isPublicEndpoint = publicEndpoints.some(endpoint => 
       config.url?.includes(endpoint)
@@ -81,9 +103,14 @@ apiClient.interceptors.request.use(
         config.headers.Authorization = `${authState.tokenType || 'Bearer'} ${authState.accessToken}`
       }
     }
+    
+    // Log request for debugging
+    requestLogger(config);
+    
     return config
   },
   (error) => {
+    console.error('API Request Error:', error);
     return Promise.reject(error)
   }
 )
@@ -91,6 +118,12 @@ apiClient.interceptors.request.use(
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
   (response) => {
+    // Log successful responses for debugging
+    console.log(`API Response [${response.status}]: ${response.config.method?.toUpperCase()} ${response.config.url}`, {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data ? (typeof response.data === 'object' ? 'Data object received' : response.data) : 'No data'
+    });
     return response
   },
   async (error) => {
