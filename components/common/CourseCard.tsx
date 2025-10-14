@@ -9,13 +9,18 @@ import {
   Users, 
   Star, 
   Play,
-  Heart
+  Heart,
+  Award,
+  Download,
+  CheckCircle
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 import { CourseDTO } from "@/types/course"
+import { useCertificate } from "@/hooks/use-certificate"
+import { useToast } from "@/hooks/use-toast"
 
 interface CourseCardProps {
   course: CourseDTO
@@ -24,6 +29,11 @@ interface CourseCardProps {
 
 export function CourseCard({ course, userRole = 'STUDENT' }: CourseCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false)
+  const [isCompleted, setIsCompleted] = useState(false)
+  const [isDownloadingCertificate, setIsDownloadingCertificate] = useState(false)
+  
+  const { isCourseCompleted, generateCertificateData } = useCertificate()
+  const { toast } = useToast()
   
   const levelColors: Record<string, string> = {
     beginner: 'bg-green-100 text-green-700 border-green-200',
@@ -35,6 +45,50 @@ export function CourseCard({ course, userRole = 'STUDENT' }: CourseCardProps) {
   const courseDetailsUrl = isInstructor 
     ? `/instructor/courses/${course.id}` 
     : `/student/courses/${course.id}`
+
+  // Check if course is completed
+  useEffect(() => {
+    if (course.userEnrolled && userRole === 'STUDENT') {
+      const checkCompletion = async () => {
+        try {
+          const completed = course.completionPercentage === 100 || await isCourseCompleted(course.id)
+          setIsCompleted(completed)
+        } catch (error) {
+          console.error('Error checking course completion:', error)
+        }
+      }
+      checkCompletion()
+    }
+  }, [course.id, course.completionPercentage, course.userEnrolled, isCourseCompleted, userRole])
+
+  const handleDownloadCertificate = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    try {
+      setIsDownloadingCertificate(true)
+      
+      const certificateData = await generateCertificateData(course)
+      if (certificateData) {
+        const { CertificateGenerator } = await import('@/lib/utils/certificate-generator')
+        await CertificateGenerator.downloadCertificate(certificateData)
+        
+        toast({
+          title: "Success",
+          description: "Certificate downloaded successfully!",
+        })
+      }
+    } catch (error) {
+      console.error('Error downloading certificate:', error)
+      toast({
+        title: "Error",
+        description: "Failed to download certificate. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDownloadingCertificate(false)
+    }
+  }
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-0 shadow-sm bg-white overflow-hidden max-w-sm">
@@ -57,12 +111,36 @@ export function CourseCard({ course, userRole = 'STUDENT' }: CourseCardProps) {
         
         {/* Overlay with action buttons */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <Link href={courseDetailsUrl}>
-            <Button size="sm" className="bg-white/90 text-black hover:bg-white">
-              <Play className="w-4 h-4 mr-2" />
-              Preview
-            </Button>
-          </Link>
+          {isCompleted && userRole === 'STUDENT' ? (
+            <div className="flex gap-2">
+              <Link href={courseDetailsUrl}>
+                <Button size="sm" className="bg-white/90 text-black hover:bg-white">
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Completed
+                </Button>
+              </Link>
+              <Button 
+                size="sm" 
+                onClick={handleDownloadCertificate}
+                disabled={isDownloadingCertificate}
+                className="bg-green-600/90 text-white hover:bg-green-600"
+              >
+                {isDownloadingCertificate ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                ) : (
+                  <Award className="w-4 h-4 mr-2" />
+                )}
+                Certificate
+              </Button>
+            </div>
+          ) : (
+            <Link href={courseDetailsUrl}>
+              <Button size="sm" className="bg-white/90 text-black hover:bg-white">
+                <Play className="w-4 h-4 mr-2" />
+                {course.userEnrolled ? 'Continue Learning' : 'Preview'}
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Price badge */}
@@ -91,12 +169,25 @@ export function CourseCard({ course, userRole = 'STUDENT' }: CourseCardProps) {
         {course.userEnrolled && course.completionPercentage !== undefined && (
           <div className="absolute bottom-0 left-0 right-0 bg-white/90 p-1.5">
             <div className="flex justify-between items-center text-xs mb-1">
-              <span className="font-medium">Progress</span>
-              <span>{course.completionPercentage?.toFixed(2)}% complete</span>
+              <span className="font-medium">
+                {isCompleted ? (
+                  <span className="flex items-center text-green-600">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Completed
+                  </span>
+                ) : (
+                  'Progress'
+                )}
+              </span>
+              <span className={isCompleted ? 'text-green-600 font-bold' : ''}>
+                {course.completionPercentage?.toFixed(0)}% complete
+              </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-1.5">
               <div 
-                className="bg-blue-600 h-1.5 rounded-full transition-all duration-500" 
+                className={`h-1.5 rounded-full transition-all duration-500 ${
+                  isCompleted ? 'bg-green-500' : 'bg-blue-600'
+                }`}
                 style={{ width: `${course.completionPercentage?.toFixed(2)}%` }}
               />
             </div>

@@ -274,38 +274,6 @@ export default function MyCoursesPage() {
                         {filteredCourses.map((course) => (
                             <div key={course.id} className="group">
                                 <CourseCard course={course} userRole="STUDENT" />
-                                
-                                {/* Additional Progress and Action Info */}
-                                <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100 transition-all duration-200 group-hover:shadow-md">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <Badge
-                                            variant="secondary"
-                                            className={`text-xs font-medium ${course.progressStatus === 'completed' ? 'bg-green-100 text-green-700 border-green-200' :
-                                                course.progressStatus === 'almost-complete' ? 'bg-orange-100 text-orange-700 border-orange-200' :
-                                                    course.progressStatus === 'in-progress' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                                                        'bg-gray-100 text-gray-700 border-gray-200'
-                                                }`}
-                                        >
-                                            {course.progressStatus === 'completed' ? '✅ Completed' :
-                                                course.progressStatus === 'almost-complete' ? '🎯 Almost Done' :
-                                                    course.progressStatus === 'in-progress' ? '📚 In Progress' :
-                                                        '🚀 Not Started'}
-                                        </Badge>
-                                        <span className="text-sm font-semibold text-gray-700">{course.completionPercentage}%</span>
-                                    </div>
-                                    
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs text-gray-600">
-                                            {course.moduleCount} modules • Last accessed {course.lastAccessed ? new Date(course.lastAccessed).toLocaleDateString() : 'Never'}
-                                        </span>
-                                        <Link href={`/student/courses/${course.id}`}>
-                                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white transition-colors">
-                                                <Play className="w-3 h-3 mr-1" />
-                                                {course.progressStatus === 'completed' ? 'Review' : course.progressStatus === 'not-started' ? 'Start' : 'Continue'}
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                </div>
                             </div>
                         ))}
                     </div>

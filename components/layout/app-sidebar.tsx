@@ -13,6 +13,7 @@ import {
   Plus,
   Settings,
   LogOut,
+  Award,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { authApi } from "@/lib/api/auth"
@@ -24,8 +25,8 @@ const studentNavigation = [
   { name: "Dashboard", href: "/student/dashboard", icon: Home },
   { name: "Browse Courses", href: "/student/courses", icon: BookOpen },
   { name: "My Courses", href: "/student/my-courses", icon: GraduationCap },
-  { name: "Assignments", href: "/student/assignments", icon: FileText },
   { name: "Progress", href: "/student/progress", icon: BarChart3 },
+  { name: "Certificates", href: "/student/certificates", icon: Award },
   { name: "Subscription", href: "/student/subscription", icon: CreditCard },
   { name: "Profile", href: "/student/profile", icon: User },
 ]
@@ -35,7 +36,6 @@ const instructorNavigation = [
   { name: "All Courses", href: "/instructor/courses", icon: BookOpen },
   { name: "My Courses", href: "/instructor/my-courses", icon: BookOpen }, // This will be replaced by our custom component
   { name: "Students", href: "/instructor/students", icon: Users },
-  { name: "Assignments", href: "/instructor/assignments", icon: FileText },
   { name: "Quizzes", href: "/instructor/quizzes", icon: GraduationCap },
   { name: "Analytics", href: "/instructor/analytics", icon: BarChart3 },
   { name: "Settings", href: "/instructor/settings", icon: Settings },
