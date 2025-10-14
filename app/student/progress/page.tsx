@@ -255,97 +255,69 @@ export default function ProgressPage() {
 
                         {/* Progress Cards */}
                         {filteredProgress.length > 0 && (
-                            <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {filteredProgress.map((progress) => (
                                     <Card key={progress.courseId} className="bg-white/70 backdrop-blur-sm border-blue-200/30 hover:shadow-lg transition-all duration-300">
-                                        <CardHeader className="pb-4">
+                                        <CardHeader className="pb-3">
                                             <div className="flex items-start justify-between">
-                                                <div className="flex-1">
-                                                    <CardTitle className="text-xl text-gray-900 mb-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <CardTitle className="text-lg text-gray-900 mb-1 truncate">
                                                         {progress.courseName}
                                                     </CardTitle>
-                                                    <p className="text-sm text-gray-600 mb-4">
-                                                        Instructor: {progress.courseInstructor}
+                                                    <p className="text-xs text-gray-600">
+                                                        {progress.courseInstructor}
                                                     </p>
                                                 </div>
-                                                <div className="text-right">
-                                                    <div className="text-2xl font-bold text-blue-600 mb-1">
+                                                <div className="text-right ml-2">
+                                                    <div className="text-xl font-bold text-blue-600">
                                                         {Math.round(progress.progressPercentage)}%
                                                     </div>
                                                     <Badge 
                                                         variant={progress.progressPercentage >= 100 ? "default" : "secondary"}
                                                         className="text-xs"
                                                     >
-                                                        {progress.progressPercentage >= 100 ? 'Completed' : 
-                                                         progress.progressPercentage > 0 ? 'In Progress' : 'Not Started'}
+                                                        {progress.progressPercentage >= 100 ? 'Done' : 
+                                                         progress.progressPercentage > 0 ? 'Active' : 'New'}
                                                     </Badge>
                                                 </div>
                                             </div>
                                         </CardHeader>
                                         
-                                        <CardContent className="space-y-6">
+                                        <CardContent className="space-y-3">
                                             {/* Progress Bar */}
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between text-sm">
-                                                    <span className="text-gray-600">Course Progress</span>
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="text-gray-600">Progress</span>
                                                     <span className="text-gray-900 font-medium">
-                                                        {progress.completedModules} / {progress.totalModules} modules
+                                                        {progress.completedModules}/{progress.totalModules}
                                                     </span>
                                                 </div>
-                                                <Progress value={progress.progressPercentage} className="h-3" />
+                                                <Progress value={progress.progressPercentage} className="h-2" />
                                             </div>
 
-                                            {/* Course Stats */}
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                                                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                        <BookOpen className="w-4 h-4 text-blue-600" />
-                                                    </div>
-                                                    <div className="text-lg font-semibold text-gray-900">{progress.totalModules}</div>
-                                                    <div className="text-xs text-gray-600">Total Modules</div>
+                                            {/* Compact Stats */}
+                                            <div className="grid grid-cols-2 gap-2 text-center">
+                                                <div className="p-2 bg-blue-50 rounded">
+                                                    <div className="text-sm font-semibold text-gray-900">{progress.totalModules}</div>
+                                                    <div className="text-xs text-gray-600">Modules</div>
                                                 </div>
-                                                
-                                                <div className="text-center p-3 bg-green-50 rounded-lg">
-                                                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                        <CheckCircle2 className="w-4 h-4 text-green-600" />
-                                                    </div>
-                                                    <div className="text-lg font-semibold text-gray-900">{progress.completedModules}</div>
-                                                    <div className="text-xs text-gray-600">Completed</div>
-                                                </div>
-                                                
-                                                <div className="text-center p-3 bg-orange-50 rounded-lg">
-                                                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                        <Clock className="w-4 h-4 text-orange-600" />
-                                                    </div>
-                                                    <div className="text-lg font-semibold text-gray-900">
-                                                        {progress.totalModules - progress.completedModules}
-                                                    </div>
-                                                    <div className="text-xs text-gray-600">Remaining</div>
-                                                </div>
-                                                
-                                                <div className="text-center p-3 bg-purple-50 rounded-lg">
-                                                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                        <Calendar className="w-4 h-4 text-purple-600" />
-                                                    </div>
-                                                    <div className="text-lg font-semibold text-gray-900">
-                                                        {new Date(progress.lastActivity).toLocaleDateString()}
-                                                    </div>
-                                                    <div className="text-xs text-gray-600">Last Activity</div>
+                                                <div className="p-2 bg-green-50 rounded">
+                                                    <div className="text-sm font-semibold text-gray-900">{progress.completedModules}</div>
+                                                    <div className="text-xs text-gray-600">Done</div>
                                                 </div>
                                             </div>
 
                                             {/* Action Buttons */}
-                                            <div className="flex gap-3 pt-4 border-t border-gray-200">
+                                            <div className="flex gap-2 pt-2">
                                                 <Link href={`/student/courses/${progress.courseId}/view`} className="flex-1">
-                                                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                                                        <PlayCircle className="w-4 h-4 mr-2" />
-                                                        Continue Learning
+                                                    <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs">
+                                                        <PlayCircle className="w-3 h-3 mr-1" />
+                                                        Continue
                                                     </Button>
                                                 </Link>
                                                 <Link href={`/student/courses/${progress.courseId}`}>
-                                                    <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
-                                                        <BookOpen className="w-4 h-4 mr-2" />
-                                                        View Course
+                                                    <Button size="sm" variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50 text-xs">
+                                                        <BookOpen className="w-3 h-3" />
                                                     </Button>
                                                 </Link>
                                             </div>

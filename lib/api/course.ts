@@ -1,6 +1,19 @@
 import { CourseDTO, ModuleDTO, QuizDTO, QuizQuestionDTO, QuizAnswerDTO } from "@/types"
 import { apiClient } from './config'
 
+// Helper function to ensure course has default instructor name
+const ensureDefaultInstructorName = (course: CourseDTO): CourseDTO => {
+  return {
+    ...course,
+    instructorName: course.instructorName || 'Andrew Ng'
+  }
+}
+
+// Helper function to process course arrays
+const processCoursesArray = (courses: CourseDTO[]): CourseDTO[] => {
+  return courses.map(ensureDefaultInstructorName)
+}
+
 export const courseApi = {
   /**
    * Get all courses
@@ -21,7 +34,7 @@ export const courseApi = {
         throw new Error('Failed to fetch courses')
       }
       
-      return response.data
+      return processCoursesArray(response.data)
     } catch (error: any) {
       console.error('Failed to fetch courses:', error)
       const message = error.response?.data?.message || error.message || 'Failed to fetch courses'
@@ -40,7 +53,7 @@ export const courseApi = {
         throw new Error('Failed to create course')
       }
       
-      return response.data
+      return ensureDefaultInstructorName(response.data)
     } catch (error: any) {
       console.error('Failed to create course:', error)
       const message = error.response?.data?.message || error.message || 'Failed to create course'
@@ -64,7 +77,7 @@ export const courseApi = {
         throw new Error('Failed to fetch course')
       }
       
-      return response.data
+      return ensureDefaultInstructorName(response.data)
     } catch (error: any) {
       console.error(`Failed to fetch course with ID ${id}:`, error)
       const message = error.response?.data?.message || error.message || 'Failed to fetch course'
@@ -83,7 +96,7 @@ export const courseApi = {
         throw new Error('Failed to update course')
       }
       
-      return response.data
+      return ensureDefaultInstructorName(response.data)
     } catch (error: any) {
       console.error(`Failed to update course with ID ${id}:`, error)
       const message = error.response?.data?.message || error.message || 'Failed to update course'
@@ -130,7 +143,7 @@ export const courseApi = {
         throw new Error('Failed to upload course thumbnail')
       }
       
-      return response.data
+      return ensureDefaultInstructorName(response.data)
     } catch (error: any) {
       console.error(`Failed to upload thumbnail for course with ID ${id}:`, error)
       const message = error.response?.data?.message || error.message || 'Failed to upload course thumbnail'
@@ -149,7 +162,7 @@ export const courseApi = {
         throw new Error('Failed to fetch instructor courses')
       }
       
-      return response.data
+      return processCoursesArray(response.data)
     } catch (error: any) {
       console.error('Failed to fetch instructor courses:', error)
       const message = error.response?.data?.message || error.message || 'Failed to fetch instructor courses'
@@ -168,7 +181,7 @@ export const courseApi = {
         throw new Error('Failed to publish course')
       }
       
-      return response.data
+      return ensureDefaultInstructorName(response.data)
     } catch (error: any) {
       console.error(`Failed to publish course with ID ${id}:`, error)
       const message = error.response?.data?.message || error.message || 'Failed to publish course'
@@ -189,7 +202,7 @@ export const courseApi = {
         throw new Error('Failed to fetch enrolled courses')
       }
       
-      return response.data
+      return processCoursesArray(response.data)
     } catch (error: any) {
       console.error('Failed to fetch enrolled courses:', error)
       const message = error.response?.data?.message || error.message || 'Failed to fetch enrolled courses'
@@ -210,7 +223,7 @@ export const courseApi = {
         throw new Error('Failed to fetch courses by category')
       }
       
-      return response.data
+      return processCoursesArray(response.data)
     } catch (error: any) {
       console.error(`Failed to fetch courses by category ${category}:`, error)
       const message = error.response?.data?.message || error.message || 'Failed to fetch courses by category'

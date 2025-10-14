@@ -49,7 +49,7 @@ export const studentDashboardApi = {
         enrollmentId: 0, // Will be filled by enrollment API if needed
         enrolledAt: course.createdAt,
         completionPercentage: course.completionPercentage || 0,
-        instructorName: course.instructorName || 'Unknown Instructor',
+        instructorName: course.instructorName || 'Andrew Ng',
         estimatedDuration: course.moduleCount ? course.moduleCount * 2 : 10 // Estimate 2 hours per module
       }))
 

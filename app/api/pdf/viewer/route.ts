@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Force dynamic rendering for this route since it uses search params
+export const dynamic = 'force-dynamic';
+
 /**
  * This API route acts as a proxy for PDF content.
  * It allows embedding a PDF viewer for files that have CORS restrictions.

@@ -6,6 +6,7 @@ import { CourseDTO, ModuleDTO } from "@/types"
 import { courseApi, enrollmentApi } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
+import { useCertificate } from "@/hooks/use-certificate"
 import {
   Star,
   Clock,
@@ -16,7 +17,8 @@ import {
   Globe,
   ArrowRight,
   CheckCircle,
-  Coins
+  Coins,
+  Download
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -41,10 +43,13 @@ export function CourseView({ courseId, userRole }: CourseViewProps) {
   const [isViewerOpen, setIsViewerOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("about")
   const [totalCoinsRequired, setTotalCoinsRequired] = useState(0)
+  const [isCompleted, setIsCompleted] = useState(false)
+  const [isDownloadingCertificate, setIsDownloadingCertificate] = useState(false)
   
   const { user } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
+  const { isCourseCompleted, generateCertificateData } = useCertificate()
 
   // Fetch course data
   useEffect(() => {
@@ -109,6 +114,49 @@ export function CourseView({ courseId, userRole }: CourseViewProps) {
       setJustEnrolled(false)
     }
   }, [justEnrolled, isEnrolled, loading, router, userRole, courseId])
+
+  // Check course completion status
+  useEffect(() => {
+    if (isEnrolled && course && userRole === 'STUDENT') {
+      const checkCompletion = async () => {
+        try {
+          const completed = course.completionPercentage === 100 || await isCourseCompleted(courseId)
+          setIsCompleted(completed)
+        } catch (error) {
+          console.error('Error checking course completion:', error)
+        }
+      }
+      checkCompletion()
+    }
+  }, [isEnrolled, course, courseId, userRole, isCourseCompleted])
+
+  const handleDownloadCertificate = async () => {
+    if (!course) return
+    
+    try {
+      setIsDownloadingCertificate(true)
+      
+      const certificateData = await generateCertificateData(course)
+      if (certificateData) {
+        const { CertificateGenerator } = await import('@/lib/utils/certificate-generator')
+        await CertificateGenerator.downloadCertificate(certificateData)
+        
+        toast({
+          title: "Success",
+          description: "Certificate downloaded successfully!",
+        })
+      }
+    } catch (error) {
+      console.error('Error downloading certificate:', error)
+      toast({
+        title: "Error",
+        description: "Failed to download certificate. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDownloadingCertificate(false)
+    }
+  }
 
   const handleEnrollClick = async () => {
     console.log("CourseView: Enroll button clicked", { courseId })
@@ -218,12 +266,10 @@ export function CourseView({ courseId, userRole }: CourseViewProps) {
           <p className="text-gray-600 mb-4">{course.description}</p>
           
           <div className="flex flex-wrap items-center gap-4 mb-6">
-            {course.instructorName && (
-              <div className="flex items-center gap-1">
-                <span className="text-sm text-gray-700">Instructor:</span>
-                <span className="text-sm font-medium">{course.instructorName}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-gray-700">Instructor:</span>
+              <span className="text-sm font-medium">{course.instructorName}</span>
+            </div>
             
             <div className="flex items-center gap-1">
               <Users className="w-4 h-4 text-gray-500" />
@@ -441,20 +487,46 @@ export function CourseView({ courseId, userRole }: CourseViewProps) {
                 <div className="space-y-4">
                   <div className="w-full bg-gray-200 rounded-full h-2.5">
                     <div 
-                      className="bg-blue-600 h-2.5 rounded-full" 
+                      className={`h-2.5 rounded-full ${
+                        isCompleted ? 'bg-green-500' : 'bg-blue-600'
+                      }`}
                       style={{ width: `${(course.completionPercentage || 0).toFixed(2)}%` }}
                     ></div>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>{(course.completionPercentage || 0).toFixed(2)}% complete</span>
+                    <span className={isCompleted ? 'text-green-600 font-semibold' : ''}>
+                      {isCompleted ? '100% Complete! 🎉' : `${(course.completionPercentage || 0).toFixed(2)}% complete`}
+                    </span>
                     <span>{modules.filter(m => m.completed).length}/{modules.length} modules</span>
                   </div>
-                  <Button 
-                    className="w-full"
-                    onClick={() => router.push(`/${userRole.toLowerCase()}/courses/${courseId}/view`)}
-                  >
-                    Continue Learning
-                  </Button>
+                  
+                  {isCompleted ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-center space-x-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">Course Completed!</span>
+                      </div>
+                      <Button 
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        onClick={handleDownloadCertificate}
+                        disabled={isDownloadingCertificate}
+                      >
+                        {isDownloadingCertificate ? (
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                        ) : (
+                          <Award className="w-4 h-4 mr-2" />
+                        )}
+                        {isDownloadingCertificate ? 'Generating...' : 'Download Certificate'}
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      className="w-full"
+                      onClick={() => router.push(`/${userRole.toLowerCase()}/courses/${courseId}/view`)}
+                    >
+                      Continue Learning
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-4">
