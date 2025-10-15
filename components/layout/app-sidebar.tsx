@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   Award,
+  FilePlus
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { authApi } from "@/lib/api/auth"
@@ -34,11 +35,8 @@ const studentNavigation = [
 const instructorNavigation = [
   { name: "Dashboard", href: "/instructor/dashboard", icon: Home },
   { name: "All Courses", href: "/instructor/courses", icon: BookOpen },
-  { name: "My Courses", href: "/instructor/my-courses", icon: BookOpen }, // This will be replaced by our custom component
-  { name: "Students", href: "/instructor/students", icon: Users },
-  { name: "Quizzes", href: "/instructor/quizzes", icon: GraduationCap },
+  { name: "My Courses", href: "/instructor/my-courses", icon: FilePlus }, 
   { name: "Analytics", href: "/instructor/analytics", icon: BarChart3 },
-  { name: "Settings", href: "/instructor/settings", icon: Settings },
   { name: "Profile", href: "/instructor/profile", icon: User },
 ]
 
