@@ -47,6 +47,22 @@ export interface ApiResponse<T> {
   timestamp: string
 }
 
+export interface ValidatePointsResponse {
+  hasEnoughPoints: boolean
+  currentPoints: number
+  requiredPoints: number
+  deficit?: number
+  message?: string
+}
+
+export interface DeductPointsRequest {
+  userId: string
+  points: number
+  resourceType: string
+  resourceId: string
+  description: string
+}
+
 export const pointsApi = {
   /**
    * Get user's points wallet information
@@ -106,6 +122,65 @@ export const pointsApi = {
     } catch (error: any) {
       console.error('Failed to redeem points:', error)
       const message = error.response?.data?.message || error.message || 'Failed to redeem points'
+      throw new Error(message)
+    }
+  },
+
+  /**
+   * Validate that the user has enough points for a given requirement
+   */
+  validateUserPoints: async (userId: string, requiredPoints: number): Promise<ValidatePointsResponse> => {
+    try {
+      const response = await apiClient.post<ApiResponse<ValidatePointsResponse>>(
+        '/v1/points/validate',
+        {},
+        {
+          params: {
+            userId,
+            requiredPoints,
+          }
+        }
+      )
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Insufficient points')
+      }
+
+      return response.data.data
+    } catch (error: any) {
+      console.error('Failed to validate points:', error)
+      const message = error.response?.data?.message || error.message || 'Failed to validate points'
+      throw new Error(message)
+    }
+  },
+
+  /**
+   * Deduct points from the user for a specific resource access
+   */
+  deductPoints: async (deductData: DeductPointsRequest): Promise<string> => {
+    try {
+      const response = await apiClient.post<ApiResponse<string>>(
+        '/v1/points/deduct',
+        {},
+        {
+          params: {
+            userId: deductData.userId,
+            points: deductData.points,
+            resourceType: deductData.resourceType,
+            resourceId: deductData.resourceId,
+            description: deductData.description
+          }
+        }
+      )
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to deduct points')
+      }
+
+      return response.data.data
+    } catch (error: any) {
+      console.error('Failed to deduct points:', error)
+      const message = error.response?.data?.message || error.message || 'Failed to deduct points'
       throw new Error(message)
     }
   }
