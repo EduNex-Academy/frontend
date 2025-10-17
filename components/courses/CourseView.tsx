@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { CourseDTO, ModuleDTO } from "@/types"
-import { courseApi, enrollmentApi } from "@/lib/api"
+import { courseApi, enrollmentApi, pointsApi } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { useCertificate } from "@/hooks/use-certificate"
@@ -18,13 +18,23 @@ import {
   ArrowRight,
   CheckCircle,
   Coins,
-  Download
+  Download,
+  Loader2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ContentViewer } from "./ContentViewer"
 import { CourseThumbnail } from "./CourseThumbnail"
 
@@ -45,6 +55,10 @@ export function CourseView({ courseId, userRole }: CourseViewProps) {
   const [totalCoinsRequired, setTotalCoinsRequired] = useState(0)
   const [isCompleted, setIsCompleted] = useState(false)
   const [isDownloadingCertificate, setIsDownloadingCertificate] = useState(false)
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
+  const [walletBalance, setWalletBalance] = useState<number | null>(null)
+  const [walletLoading, setWalletLoading] = useState(false)
+  const [pointsError, setPointsError] = useState<string | null>(null)
   
   const { user } = useAuth()
   const { toast } = useToast()
@@ -130,6 +144,39 @@ export function CourseView({ courseId, userRole }: CourseViewProps) {
     }
   }, [isEnrolled, course, courseId, userRole, isCourseCompleted])
 
+  // Load user's wallet balance when the confirmation dialog opens
+  useEffect(() => {
+    if (!isConfirmDialogOpen || !user) {
+      return
+    }
+
+    let isMounted = true
+    const loadWalletBalance = async () => {
+      try {
+        setWalletLoading(true)
+        setPointsError(null)
+        const wallet = await pointsApi.getUserWallet()
+        if (!isMounted) return
+        setWalletBalance(wallet.totalPoints)
+      } catch (error: any) {
+        console.error('CourseView: Failed to load wallet balance', error)
+        if (!isMounted) return
+        const message = error instanceof Error ? error.message : 'Failed to load wallet balance. Please try again.'
+        setPointsError(message)
+      } finally {
+        if (isMounted) {
+          setWalletLoading(false)
+        }
+      }
+    }
+
+    loadWalletBalance()
+
+    return () => {
+      isMounted = false
+    }
+  }, [isConfirmDialogOpen, user])
+
   const handleDownloadCertificate = async () => {
     if (!course) return
     
@@ -158,9 +205,88 @@ export function CourseView({ courseId, userRole }: CourseViewProps) {
     }
   }
 
-  const handleEnrollClick = async () => {
+  const handleConfirmEnrollment = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please login to enroll in this course.",
+        variant: "destructive",
+      })
+      router.push("/auth/login")
+      return
+    }
+
+    if (!course) {
+      toast({
+        title: "Error",
+        description: "Course information is unavailable.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      console.log("CourseView: Confirming enrollment with points deduction", { courseId, userId: user.id })
+      setEnrolling(true)
+      setPointsError(null)
+
+      if (totalCoinsRequired > 0) {
+        const validationResult = await pointsApi.validateUserPoints(user.id, totalCoinsRequired)
+
+        if (!validationResult.hasEnoughPoints) {
+          setPointsError(`You need ${validationResult.requiredPoints} coins but only have ${validationResult.currentPoints}.`)
+          setWalletBalance(validationResult.currentPoints)
+          return
+        }
+
+        await pointsApi.deductPoints({
+          userId: user.id,
+          points: totalCoinsRequired,
+          resourceType: 'COURSE_ENROLLMENT',
+          resourceId: 'ade869ba-3743-4e55-8d78-2ea505931a35',
+          description: `Enrollment for course ${course.title}`
+        })
+
+        const updatedBalance = validationResult.currentPoints - totalCoinsRequired
+        setWalletBalance(Math.max(updatedBalance, 0))
+      }
+
+      await enrollmentApi.enrollInCourse(courseId)
+
+      setIsEnrolled(true)
+      setJustEnrolled(true)
+
+      toast({
+        title: "Success",
+        description: totalCoinsRequired > 0
+          ? `You have successfully enrolled and spent ${totalCoinsRequired} coins.`
+          : "You have successfully enrolled in this course.",
+      })
+
+      setIsConfirmDialogOpen(false)
+
+      const updatedCourse = await courseApi.getCourseById(courseId, true)
+      setCourse(updatedCourse)
+    } catch (error: any) {
+      console.error("CourseView: Enrollment error:", error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to enroll in the course. Please try again.'
+      setPointsError(errorMessage)
+
+      if (!errorMessage.toLowerCase().includes('insufficient')) {
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        })
+      }
+    } finally {
+      setEnrolling(false)
+    }
+  }
+
+  const handleEnrollClick = () => {
     console.log("CourseView: Enroll button clicked", { courseId })
-    
+
     if (!user) {
       console.log("CourseView: User not logged in")
       toast({
@@ -172,38 +298,8 @@ export function CourseView({ courseId, userRole }: CourseViewProps) {
       return
     }
 
-    try {
-      console.log("CourseView: Attempting to enroll user", { userId: user.id, courseId })
-      setEnrolling(true)
-      
-      // Enroll the user in the course
-      console.log("CourseView: Calling enrollmentApi.enrollInCourse", { courseId })
-      await enrollmentApi.enrollInCourse(courseId)
-      console.log("CourseView: Enrollment successful")
-      
-      // Update enrollment status
-      setIsEnrolled(true)
-      // Set flag that user just enrolled (this will trigger redirect)
-      setJustEnrolled(true)
-      
-      toast({
-        title: "Success",
-        description: "You have successfully enrolled in this course.",
-      })
-      
-      // Refresh course data to update enrollment status
-      const updatedCourse = await courseApi.getCourseById(courseId, true)
-      setCourse(updatedCourse)
-    } catch (error: any) {
-      console.error("CourseView: Enrollment error:", error)
-      toast({
-        title: "Error",
-        description: `Failed to enroll in the course: ${error.message || "Please try again"}`,
-        variant: "destructive",
-      })
-    } finally {
-      setEnrolling(false)
-    }
+    setPointsError(null)
+    setIsConfirmDialogOpen(true)
   }
 
   const handleViewModule = (module: ModuleDTO) => {
@@ -252,6 +348,9 @@ export function CourseView({ courseId, userRole }: CourseViewProps) {
 
   const isInstructor = userRole === 'INSTRUCTOR'
   // isEnrolled is now handled via state
+  const projectedBalance = walletBalance !== null
+    ? walletBalance - (isConfirmDialogOpen ? totalCoinsRequired : 0)
+    : null
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -549,6 +648,121 @@ export function CourseView({ courseId, userRole }: CourseViewProps) {
         </div>
       </div>
       
+      <Dialog
+        open={isConfirmDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            if (enrolling) return
+            setIsConfirmDialogOpen(false)
+            setPointsError(null)
+          } else {
+            setIsConfirmDialogOpen(true)
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Confirm Enrollment</DialogTitle>
+            <DialogDescription>
+              {totalCoinsRequired > 0
+                ? `Enrolling in this course will deduct ${totalCoinsRequired} coins from your wallet.`
+                : 'This course is free to enroll. Would you like to continue?'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                  <Coins className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-blue-800">Course Cost</p>
+                  <p className="text-lg font-semibold text-blue-900">{totalCoinsRequired} coins</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3 rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>Current Balance</span>
+                <span className="flex items-center gap-2 font-medium text-gray-900">
+                  {walletLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                      Loading...
+                    </>
+                  ) : walletBalance !== null ? (
+                    <>{walletBalance} coins</>
+                  ) : (
+                    '—'
+                  )}
+                </span>
+              </div>
+              <Separator />
+              <div
+                className={`flex items-center justify-between text-sm ${
+                  projectedBalance !== null && projectedBalance < 0 ? 'text-red-600' : 'text-gray-600'
+                }`}
+              >
+                <span>Balance After Enrollment</span>
+                <span className="font-medium">
+                  {projectedBalance !== null ? `${Math.max(projectedBalance, 0)} coins` : '—'}
+                </span>
+              </div>
+            </div>
+
+            {pointsError && (
+              <Alert variant="destructive">
+                <AlertTitle>Action required</AlertTitle>
+                <AlertDescription>{pointsError}</AlertDescription>
+              </Alert>
+            )}
+
+            {!pointsError && projectedBalance !== null && projectedBalance < 0 && (
+              <Alert variant="destructive">
+                <AlertTitle>Not enough points</AlertTitle>
+                <AlertDescription>
+                  You need an additional {Math.abs(projectedBalance)} coins to enroll in this course.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+
+          <DialogFooter className="pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (enrolling) return
+                setIsConfirmDialogOpen(false)
+                setPointsError(null)
+              }}
+              disabled={enrolling}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmEnrollment}
+              disabled={enrolling || walletLoading}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {enrolling ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processing...
+                </span>
+              ) : totalCoinsRequired > 0 ? (
+                'Confirm & Deduct'
+              ) : (
+                'Confirm Enrollment'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Content viewer modal */}
       <ContentViewer
         module={selectedModule}
