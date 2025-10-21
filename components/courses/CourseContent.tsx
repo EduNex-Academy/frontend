@@ -39,6 +39,7 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
   const [loading, setLoading] = useState(true)
   const [isEnrolled, setIsEnrolled] = useState(false)
   const [completingModule, setCompletingModule] = useState(false)
+  const [pdfLoading, setPdfLoading] = useState(true)
   
   const { user } = useAuth()
   const { toast } = useToast()
@@ -191,6 +192,13 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
       fetchAndApplyUserProgress()
     }
   }, [modules.length, fetchAndApplyUserProgress, userRole])
+  
+  // Reset PDF loading state when module changes
+  useEffect(() => {
+    if (currentModule?.type === 'PDF') {
+      setPdfLoading(true)
+    }
+  }, [currentModule?.id, currentModule?.type])
   
   // Log content URLs for debugging
   useEffect(() => {
@@ -560,17 +568,27 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
                       )}
                       
                       {currentModule.type === 'PDF' && (
-                        <div className="w-full h-[70vh]">
+                        <div className="w-full h-[70vh] relative">
                           {(currentModule.contentCloudFrontUrl || currentModule.contentUrl) ? (
                             <>
+                              {pdfLoading && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10">
+                                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                                  <p className="text-gray-600">Loading PDF...</p>
+                                </div>
+                              )}
                               <iframe
                                 key={currentModule.id}
                                 src={currentModule.contentCloudFrontUrl || currentModule.contentUrl}
                                 className="w-full h-full border-0 rounded"
                                 title={currentModule.title}
-                                onLoad={() => console.log("PDF loaded successfully")}
+                                onLoad={() => {
+                                  console.log("PDF loaded successfully")
+                                  setPdfLoading(false)
+                                }}
                                 onError={(e) => {
                                   console.error("PDF viewing error", e);
+                                  setPdfLoading(false)
                                 }}
                               />
                               <div className="mt-2 text-center">
