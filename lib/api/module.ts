@@ -147,7 +147,9 @@ export const moduleApi = {
         {
           headers: {
             'Content-Type': 'multipart/form-data'
-          }
+          },
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity
         }
       )
       
