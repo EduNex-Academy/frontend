@@ -563,30 +563,16 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
                         <div className="w-full h-[70vh]">
                           {(currentModule.contentCloudFrontUrl || currentModule.contentUrl) ? (
                             <>
-                              <object
-                                data={currentModule.contentCloudFrontUrl || currentModule.contentUrl}
-                                type="application/pdf"
+                              <iframe
+                                key={currentModule.id}
+                                src={currentModule.contentCloudFrontUrl || currentModule.contentUrl}
                                 className="w-full h-full border-0 rounded"
+                                title={currentModule.title}
                                 onLoad={() => console.log("PDF loaded successfully")}
                                 onError={(e) => {
                                   console.error("PDF viewing error", e);
-                                  toast({
-                                    title: "PDF Viewing Error",
-                                    description: "Unable to load PDF directly. Try downloading it instead.",
-                                    variant: "destructive",
-                                  });
                                 }}
-                              >
-                                <p className="p-4 text-center">
-                                  Unable to display PDF directly. 
-                                  <a href={currentModule.contentCloudFrontUrl || currentModule.contentUrl} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="text-blue-600 hover:underline ml-1">
-                                    Click here to open it in a new tab
-                                  </a>.
-                                </p>
-                              </object>
+                              />
                               <div className="mt-2 text-center">
                                 <a 
                                   href={currentModule.contentCloudFrontUrl || currentModule.contentUrl}
