@@ -236,12 +236,9 @@ export function CourseContent({ courseId, userRole }: CourseContentProps) {
         }
       };
       
-      // Test both URLs if available
+      // Test only the CloudFront URL (contentUrl is just the S3 object key)
       if (currentModule.contentCloudFrontUrl) {
         testContentUrl(currentModule.contentCloudFrontUrl);
-      }
-      if (currentModule.contentUrl && (currentModule.type === 'VIDEO' || currentModule.type === 'PDF')) {
-        testContentUrl(currentModule.contentUrl);
       }
       
       // If the module has content but doesn't have a CloudFront URL, try to get it
