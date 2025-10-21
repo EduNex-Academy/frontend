@@ -149,7 +149,8 @@ export const moduleApi = {
             'Content-Type': 'multipart/form-data'
           },
           maxContentLength: Infinity,
-          maxBodyLength: Infinity
+          maxBodyLength: Infinity,
+          timeout: 0
         }
       )
       
